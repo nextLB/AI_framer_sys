@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}设备详情 - {{ device.name }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-hdd-stack"></i> 设备详情 - {{ device.name }}</h2>
+
+<div class="card">
+    <div class="card-header">基本信息</div>
+    <div class="card-body">
+        <p><strong>设备ID：</strong> {{ device.device_id }}</p>
+        <p><strong>设备名称：</strong> {{ device.name }}</p>
+        <p><strong>型号：</strong> {{ device.model|default:"-" }}</p>
+        <p><strong>制造商：</strong> {{ device.manufacturer|default:"-" }}</p>
+        <p><strong>序列号：</strong> {{ device.serial_number|default:"-" }}</p>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">状态信息</div>
+    <div class="card-body">
+        <p><strong>状态：</strong>
+            <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% else %}secondary{% endif %}">
+                {{ device.get_status_display }}
+            </span>
+        </p>
+        <p><strong>运行模式：</strong> {{ device.get_run_mode_display }}</p>
+        <p><strong>电量：</strong> {{ device.battery_level }}%</p>
+        <p><strong>喷洒速率：</strong> {{ device.spray_rate }} L/min</p>
+        <p><strong>巡检间隔：</strong> {{ device.patrol_interval }} 分钟</p>
+        <p><strong>避障灵敏度：</strong> {{ device.obstacle_avoidance_sensitivity }}</p>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">位置信息</div>
+    <div class="card-body">
+        <p><strong>纬度：</strong> {{ device.location_lat|default:"-" }}</p>
+        <p><strong>经度：</strong> {{ device.location_lng|default:"-" }}</p>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{% url 'devices:device_list' %}" class="btn btn-secondary">返回列表</a>
+    <a href="{% url 'devices:device_edit' device.id %}" class="btn btn-warning">编辑</a>
+    <a href="{% url 'control:control_panel' device.id %}" class="btn btn-primary">控制</a>
+    <a href="{% url 'monitoring:device_monitoring' device.id %}" class="btn btn-info">监控</a>
+</div>
+{% endblock %}

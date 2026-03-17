@@ -54,7 +54,7 @@ def send_command(request, device_id):
         )
         
         messages.success(request, f'命令已发送: {command.get_command_type_display()}')
-        return redirect('control_panel', device_id=device.id)
+        return redirect('control:control_panel', device_id=device.id)
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -77,7 +77,7 @@ def activate_manual_control(request, device_id):
     )
     
     messages.success(request, '手动控制已激活')
-    return redirect('control_panel', device_id=device.id)
+    return redirect('control:control_panel', device_id=device.id)
 
 
 @login_required
@@ -103,7 +103,7 @@ def deactivate_manual_control(request, device_id):
     except ManualControl.DoesNotExist:
         pass
     
-    return redirect('control_panel', device_id=device.id)
+    return redirect('control:control_panel', device_id=device.id)
 
 
 @login_required

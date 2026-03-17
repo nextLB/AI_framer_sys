@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}通信管理 - 农业植保机器人监控系统{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-chat-dots"></i> 通信管理</h2>
+
+<div class="card">
+    <div class="card-header">连接列表</div>
+    <div class="card-body">
+        {% if connections %}
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>设备</th>
+                    <th>IP地址</th>
+                    <th>端口</th>
+                    <th>状态</th>
+                    <th>消息数</th>
+                    <th>最后通信</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conn in connections %}
+                <tr>
+                    <td>{{ conn.device.name }}</td>
+                    <td>{{ conn.ip_address }}</td>
+                    <td>{{ conn.port }}</td>
+                    <td>
+                        <span class="badge bg-{% if conn.is_connected %}success{% else %}secondary{% endif %}">
+                            {% if conn.is_connected %}已连接{% else %}未连接{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ conn.message_count }}</td>
+                    <td>{{ conn.last_message_at|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted text-center">暂无连接记录</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

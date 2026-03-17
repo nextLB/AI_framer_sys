@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}AI识别 - 农业植保机器人监控系统{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-cpu"></i> AI智能识别</h2>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">识别任务</h5>
+            </div>
+            <div class="card-body">
+                {% if tasks %}
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>设备</th>
+                            <th>任务类型</th>
+                            <th>状态</th>
+                            <th>置信度</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td>{{ task.device.name }}</td>
+                            <td>{{ task.get_task_type_display }}</td>
+                            <td>
+                                <span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'processing' %}primary{% elif task.status == 'failed' %}danger{% else %}warning{% endif %}">
+                                    {{ task.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ task.confidence|default:"-" }}</td>
+                            <td>{{ task.created_at }}</td>
+                            <td>
+                                <a href="{% url 'ai_recognition:recognition_task_detail' task.id %}" class="btn btn-sm btn-info">详情</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted text-center">暂无识别任务</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">快速开始</div>
+            <div class="card-body">
+                <p>选择设备开始AI识别任务：</p>
+                <a href="{% url 'devices:device_list' %}" class="btn btn-primary">选择设备</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">识别配置</div>
+            <div class="card-body">
+                <p>管理AI识别模型配置</p>
+                <a href="{% url 'ai_recognition:recognition_config_list' %}" class="btn btn-secondary">配置管理</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

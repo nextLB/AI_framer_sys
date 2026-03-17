@@ -67,7 +67,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="{% url 'device_detail' device.id %}" class="btn btn-sm btn-primary">详情</a>
+                                <a href="{% url 'devices:device_detail' device.id %}" class="btn btn-sm btn-primary">详情</a>
                                 <a href="{% url 'control:control_panel' device.id %}" class="btn btn-sm btn-success">控制</a>
                             </td>
                         </tr>
@@ -75,7 +75,7 @@
                     </tbody>
                 </table>
                 {% else %}
-                <p class="text-muted">暂无设备，请先 <a href="{% url 'device_register' %}">注册设备</a></p>
+                <p class="text-muted">暂无设备，请先 <a href="{% url 'devices:device_register' %}">注册设备</a></p>
                 {% endif %}
             </div>
         </div>
@@ -88,16 +88,16 @@
             </div>
             <div class="card-body">
                 <div class="list-group">
-                    <a href="{% url 'device_register' %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'devices:device_register' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-plus-circle"></i> 注册新设备
                     </a>
                     <a href="{% url 'monitoring:monitoring_dashboard' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-display"></i> 实时监控
                     </a>
-                    <a href="{% url 'ai:recognition_dashboard' %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'ai_recognition:recognition_dashboard' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-cpu"></i> AI识别
                     </a>
-                    <a href="{% url 'data:big_screen' %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'data_analysis:big_screen' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-collection-play"></i> 数据大屏
                     </a>
                 </div>

@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'data_analysis'
+
 urlpatterns = [
     path('', views.data_dashboard, name='data_dashboard'),
     path('sessions/', views.work_session_list, name='work_session_list'),

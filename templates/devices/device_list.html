@@ -10,7 +10,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">设备列表</h5>
-                <a href="{% url 'device_register' %}" class="btn btn-sm btn-light">
+                <a href="{% url 'devices:device_register' %}" class="btn btn-sm btn-light">
                     <i class="bi bi-plus-circle"></i> 注册新设备
                 </a>
             </div>
@@ -58,8 +58,8 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <a href="{% url 'device_detail' device.id %}" class="btn btn-sm btn-info">详情</a>
-                                    <a href="{% url 'device_edit' device.id %}" class="btn btn-sm btn-warning">编辑</a>
+                                    <a href="{% url 'devices:device_detail' device.id %}" class="btn btn-sm btn-info">详情</a>
+                                    <a href="{% url 'devices:device_edit' device.id %}" class="btn btn-sm btn-warning">编辑</a>
                                     <a href="{% url 'control:control_panel' device.id %}" class="btn btn-sm btn-success">控制</a>
                                 </td>
                             </tr>
@@ -84,7 +84,7 @@
                     </ul>
                 </nav>
                 {% else %}
-                <p class="text-muted text-center">暂无设备，请先 <a href="{% url 'device_register' %}">注册设备</a></p>
+                <p class="text-muted text-center">暂无设备，请先 <a href="{% url 'devices:device_register' %}">注册设备</a></p>
                 {% endif %}
             </div>
         </div>

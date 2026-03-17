@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'control'
+
 urlpatterns = [
     path('<int:device_id>/', views.control_panel, name='control_panel'),
     path('<int:device_id>/command/', views.send_command, name='send_command'),

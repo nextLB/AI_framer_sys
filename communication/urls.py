@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'communication'
+
 urlpatterns = [
     path('', views.connection_list, name='connection_list'),
     path('<int:connection_id>/', views.connection_detail, name='connection_detail'),

@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'ai_recognition'
+
 urlpatterns = [
     path('', views.recognition_dashboard, name='recognition_dashboard'),
     path('start/<int:device_id>/', views.start_recognition, name='start_recognition'),

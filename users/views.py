@@ -30,12 +30,6 @@ def user_login(request):
             return redirect('dashboard')
         else:
             messages.error(request, '用户名或密码错误')
-            LoginLog.objects.create(
-                username=username,
-                ip_address=get_client_ip(request),
-                user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
-                status='failed'
-            )
     
     return render(request, 'users/login.html')
 
@@ -56,6 +50,8 @@ def user_register(request):
             login(request, user)
             messages.success(request, '注册成功！')
             return redirect('dashboard')
+        else:
+            print("表单错误:", form.errors)
     else:
         form = UserRegistrationForm()
     

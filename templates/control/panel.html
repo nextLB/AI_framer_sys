@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}设备控制 - {{ device.name }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-controller"></i> 设备控制 - {{ device.name }}</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">设备状态</div>
+            <div class="card-body">
+                <p><strong>状态：</strong>
+                    <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% else %}secondary{% endif %}">
+                        {{ device.get_status_display }}
+                    </span>
+                </p>
+                <p><strong>电量：</strong> {{ device.battery_level }}%</p>
+                <p><strong>运行模式：</strong> {{ device.get_run_mode_display }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">手动控制</div>
+            <div class="card-body text-center">
+                {% if manual_control.is_active %}
+                    <p class="text-success">手动控制已激活</p>
+                    <a href="{% url 'control:deactivate_manual_control' device.id %}" class="btn btn-danger">停用手动控制</a>
+                {% else %}
+                    <p class="text-muted">手动控制未激活</p>
+                    <a href="{% url 'control:activate_manual_control' device.id %}" class="btn btn-primary">激活手动控制</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">快速命令</div>
+            <div class="card-body">
+                <div class="btn-group" role="group">
+                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="forward">
+                        <button type="submit" class="btn btn-primary">前进</button>
+                    </form>
+                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="backward">
+                        <button type="submit" class="btn btn-primary">后退</button>
+                    </form>
+                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="left">
+                        <button type="submit" class="btn btn-primary">左转</button>
+                    </form>
+                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="right">
+                        <button type="submit" class="btn btn-primary">右转</button>
+                    </form>
+                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="stop">
+                        <button type="submit" class="btn btn-danger">停止</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">最近命令</div>
+            <div class="card-body">
+                {% if commands %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>命令类型</th>
+                            <th>状态</th>
+                            <th>发送者</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cmd in commands %}
+                        <tr>
+                            <td>{{ cmd.get_command_type_display }}</td>
+                            <td>{{ cmd.get_status_display }}</td>
+                            <td>{{ cmd.sender.username|default:"-" }}</td>
+                            <td>{{ cmd.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">暂无命令记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

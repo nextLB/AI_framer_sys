@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}数据分析 - 农业植保机器人监控系统{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-graph-up"></i> 数据分析</h2>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-value">{{ total_devices }}</div>
+            <div class="stat-label">设备总数</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-value text-success">{{ online_devices }}</div>
+            <div class="stat-label">在线设备</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-value">{{ total_work_hours }}</div>
+            <div class="stat-label">工作小时</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-value">{{ total_area }}</div>
+            <div class="stat-label">作业面积(亩)</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">最近作业记录</div>
+            <div class="card-body">
+                {% if recent_sessions %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>设备</th>
+                            <th>时长</th>
+                            <th>面积</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in recent_sessions %}
+                        <tr>
+                            <td>{{ session.device.name }}</td>
+                            <td>{{ session.duration }}秒</td>
+                            <td>{{ session.area_covered }}亩</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">暂无作业记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">快捷操作</div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'data_analysis:work_session_list' %}" class="list-group-item list-group-item-action">作业记录</a>
+                    <a href="{% url 'data_analysis:statistical_report_list' %}" class="list-group-item list-group-item-action">统计报告</a>
+                    <a href="{% url 'data_analysis:generate_report' %}" class="list-group-item list-group-item-action">生成报告</a>
+                    <a href="{% url 'data_analysis:big_screen' %}" class="list-group-item list-group-item-action">数据大屏</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

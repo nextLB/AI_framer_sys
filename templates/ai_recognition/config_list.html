@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}识别配置 - AI识别{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-gear"></i> 识别配置</h2>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">配置列表</h5>
+        <a href="{% url 'ai_recognition:recognition_config_create' %}" class="btn btn-sm btn-primary">添加配置</a>
+    </div>
+    <div class="card-body">
+        {% if configs %}
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>配置名称</th>
+                    <th>模型路径</th>
+                    <th>置信度阈值</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for config in configs %}
+                <tr>
+                    <td>{{ config.name }}</td>
+                    <td>{{ config.model_path|default:"-" }}</td>
+                    <td>{{ config.confidence_threshold }}</td>
+                    <td>
+                        <span class="badge bg-{% if config.is_active %}success{% else %}secondary{% endif %}">
+                            {% if config.is_active %}启用{% else %}禁用{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'ai_recognition:recognition_config_edit' config.id %}" class="btn btn-sm btn-warning">编辑</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted text-center">暂无配置</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

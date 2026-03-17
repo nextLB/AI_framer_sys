@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }}识别配置{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-gear"></i> {{ action }}识别配置</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">配置名称</label>
+                <input type="text" name="name" class="form-control" value="{{ config.name|default:'' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">模型路径</label>
+                <input type="text" name="model_path" class="form-control" value="{{ config.model_path|default:'' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">置信度阈值</label>
+                <input type="number" name="confidence_threshold" class="form-control" step="0.01" min="0" max="1" value="{{ config.confidence_threshold|default:'0.5' }}">
+            </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input type="checkbox" name="is_active" class="form-check-input" id="is_active" {% if config.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">启用此配置</label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="{% url 'ai_recognition:recognition_config_list' %}" class="btn btn-secondary">取消</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

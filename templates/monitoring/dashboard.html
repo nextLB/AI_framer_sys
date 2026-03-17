@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}实时监控 - 农业植保机器人监控系统{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-display"></i> 实时监控</h2>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">设备状态概览</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-value text-success">{{ online_count }}</div>
+                            <div class="stat-label">在线设备</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-value text-primary">{{ working_count }}</div>
+                            <div class="stat-label">工作中</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-value text-secondary">{{ offline_count }}</div>
+                            <div class="stat-label">离线设备</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">设备列表</h5>
+            </div>
+            <div class="card-body">
+                {% if devices %}
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>状态</th>
+                            <th>电量</th>
+                            <th>运行模式</th>
+                            <th>位置</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for device in devices %}
+                        <tr>
+                            <td>{{ device.name }}</td>
+                            <td>
+                                <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% elif device.status == 'offline' %}secondary{% else %}danger{% endif %}">
+                                    {{ device.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 15px; width: 80px;">
+                                    <div class="progress-bar bg-{% if device.battery_level > 50 %}success{% elif device.battery_level > 20 %}warning{% else %}danger{% endif %}" 
+                                         style="width: {{ device.battery_level }}%">
+                                    </div>
+                                </div>
+                                <small>{{ device.battery_level }}%</small>
+                            </td>
+                            <td>{{ device.get_run_mode_display }}</td>
+                            <td>
+                                {% if device.location_lat and device.location_lng %}
+                                    {{ device.location_lat|floatformat:4 }}, {{ device.location_lng|floatformat:4 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'monitoring:device_monitoring' device.id %}" class="btn btn-sm btn-info">监控</a>
+                                <a href="{% url 'control:control_panel' device.id %}" class="btn btn-sm btn-success">控制</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted text-center">暂无设备</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

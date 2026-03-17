@@ -14,7 +14,7 @@
     {% if user.is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <a class="navbar-brand" href="/dashboard/">
                 <i class="bi bi-robot"></i> 农业植保机器人监控系统
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -28,22 +28,22 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'device_list' %}">
+                        <a class="nav-link" href="{% url 'devices:device_list' %}">
                             <i class="bi bi-hdd-stack"></i> 设备管理
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'ai:recognition_dashboard' %}">
+                        <a class="nav-link" href="{% url 'ai_recognition:recognition_dashboard' %}">
                             <i class="bi bi-cpu"></i> AI识别
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'data:data_dashboard' %}">
+                        <a class="nav-link" href="{% url 'data_analysis:data_dashboard' %}">
                             <i class="bi bi-graph-up"></i> 数据分析
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'data:big_screen' %}">
+                        <a class="nav-link" href="{% url 'data_analysis:big_screen' %}">
                             <i class="bi bi-collection-play"></i> 大屏展示
                         </a>
                     </li>
@@ -59,10 +59,10 @@
                             <i class="bi bi-person-circle"></i> {{ user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'profile' %}">个人信息</a></li>
-                            <li><a class="dropdown-item" href="{% url 'change_password' %}">修改密码</a></li>
+                            <li><a class="dropdown-item" href="{% url 'users:profile' %}">个人信息</a></li>
+                            <li><a class="dropdown-item" href="{% url 'users:change_password' %}">修改密码</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}">退出登录</a></li>
+                            <li><a class="dropdown-item" href="{% url 'users:logout' %}">退出登录</a></li>
                         </ul>
                     </li>
                 </ul>

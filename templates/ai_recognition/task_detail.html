@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}任务详情 - AI识别{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-cpu"></i> 识别任务详情</h2>
+
+<div class="card">
+    <div class="card-header">任务信息</div>
+    <div class="card-body">
+        <p><strong>设备：</strong> {{ task.device.name }}</p>
+        <p><strong>任务类型：</strong> {{ task.get_task_type_display }}</p>
+        <p><strong>状态：</strong>
+            <span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'processing' %}primary{% elif task.status == 'failed' %}danger{% else %}warning{% endif %}">
+                {{ task.get_status_display }}
+            </span>
+        </p>
+        <p><strong>置信度：</strong> {{ task.confidence|default:"-" }}</p>
+        <p><strong>创建时间：</strong> {{ task.created_at }}</p>
+        <p><strong>完成时间：</strong> {{ task.completed_at|default:"-" }}</p>
+    </div>
+</div>
+
+{% if task.result_json %}
+<div class="card mt-4">
+    <div class="card-header">识别结果</div>
+    <div class="card-body">
+        <pre>{{ task.result_json|pprint }}</pre>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-4">
+    <a href="{% url 'ai_recognition:recognition_dashboard' %}" class="btn btn-secondary">返回</a>
+    {% if task.status == 'pending' %}
+    <a href="{% url 'ai_recognition:run_recognition_api' task.id %}" class="btn btn-primary">开始识别</a>
+    {% endif %}
+</div>
+{% endblock %}

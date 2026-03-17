@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}数据大屏 - 农业植保机器人监控系统{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-collection-play"></i> 数据大屏</h2>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>{{ online_count }}</h3>
+                <p>在线设备</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>{{ working_count }}</h3>
+                <p>工作中设备</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ devices.count }}</h3>
+                <p>设备总数</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3>0</h3>
+                <p>告警数量</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">设备状态</div>
+            <div class="card-body">
+                {% if devices %}
+                <table class="table table-dark">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>状态</th>
+                            <th>电量</th>
+                            <th>运行模式</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for device in devices %}
+                        <tr>
+                            <td>{{ device.name }}</td>
+                            <td>
+                                <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}info{% else %}secondary{% endif %}">
+                                    {{ device.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ device.battery_level }}%</td>
+                            <td>{{ device.get_run_mode_display }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted text-center">暂无设备</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}个人信息{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-person"></i> 个人信息</h2>
+
+<div class="card">
+    <div class="card-body">
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">邮箱</label>
+                <input type="email" name="email" class="form-control" value="{{ user.email }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">手机号</label>
+                <input type="text" name="phone" class="form-control" value="{{ user.phone|default:'' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">角色</label>
+                <input type="text" class="form-control" value="{{ user.get_role_display }}" disabled>
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">登录记录</div>
+    <div class="card-body">
+        {% if login_logs %}
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>IP地址</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in login_logs %}
+                <tr>
+                    <td>{{ log.login_time }}</td>
+                    <td>{{ log.ip_address }}</td>
+                    <td>
+                        <span class="badge bg-{% if log.status == 'success' %}success{% else %}danger{% endif %}">
+                            {{ log.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">暂无登录记录</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
