@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}设备列表 - 农业植保机器人监控系统{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-hdd-stack"></i> 设备管理</h2>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">设备列表</h5>
+                <a href="{% url 'device_register' %}" class="btn btn-sm btn-light">
+                    <i class="bi bi-plus-circle"></i> 注册新设备
+                </a>
+            </div>
+            <div class="card-body">
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>设备ID</th>
+                                <th>设备名称</th>
+                                <th>型号</th>
+                                <th>状态</th>
+                                <th>电量</th>
+                                <th>运行模式</th>
+                                <th>位置</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in page_obj %}
+                            <tr>
+                                <td>{{ device.device_id }}</td>
+                                <td>{{ device.name }}</td>
+                                <td>{{ device.model|default:"-" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% elif device.status == 'offline' %}secondary{% else %}danger{% endif %}">
+                                        {{ device.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 15px; width: 80px;">
+                                        <div class="progress-bar bg-{% if device.battery_level > 50 %}success{% elif device.battery_level > 20 %}warning{% else %}danger{% endif %}" 
+                                             style="width: {{ device.battery_level }}%">
+                                        </div>
+                                    </div>
+                                    <small>{{ device.battery_level }}%</small>
+                                </td>
+                                <td>{{ device.get_run_mode_display }}</td>
+                                <td>
+                                    {% if device.location_lat and device.location_lng %}
+                                        {{ device.location_lat|floatformat:4 }}, {{ device.location_lng|floatformat:4 }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'device_detail' device.id %}" class="btn btn-sm btn-info">详情</a>
+                                    <a href="{% url 'device_edit' device.id %}" class="btn btn-sm btn-warning">编辑</a>
+                                    <a href="{% url 'control:control_panel' device.id %}" class="btn btn-sm btn-success">控制</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">首页</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a></li>
+                        {% endif %}
+                        
+                        <li class="page-item active"><span class="page-link">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页</span></li>
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">末页</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% else %}
+                <p class="text-muted text-center">暂无设备，请先 <a href="{% url 'device_register' %}">注册设备</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
