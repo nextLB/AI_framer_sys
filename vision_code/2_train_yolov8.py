@@ -30,7 +30,7 @@ def main():
     parser.add_argument('--patience', type=int, default=20,
                         help='Early stopping patience')
     parser.add_argument('--project', type=str, 
-                        default='/home/next_lb/桌面/next/基于AI的农业植保机器人监控软件系统/outputs/',
+                        default='./outputs/',
                         help='Project directory')
     parser.add_argument('--name', type=str, 
                         default='agriculture_yolov8',

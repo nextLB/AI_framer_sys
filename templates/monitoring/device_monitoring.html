@@ -2,84 +2,590 @@
 
 {% block title %}设备监控 - {{ device.name }}{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #camera-container {
+        position: relative;
+        background: #000;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    #camera-video, #camera-canvas {
+        width: 100%;
+        display: block;
+    }
+    #camera-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    .sensor-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .sensor-card.temp { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .sensor-card.humidity { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .sensor-card.light { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .sensor-card.soil { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .sensor-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    .sensor-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .gauge-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+    }
+    #map {
+        width: 100%;
+        height: 350px;
+        border-radius: 12px;
+        overflow: hidden;
+        z-index: 1;
+    }
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+    }
+    .status-online { background: #28a745; }
+    .status-working { background: #007bff; animation: pulse 1s infinite; }
+    .status-offline { background: #6c757d; animation: none; }
+    
+    @keyframes pulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.9); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    .camera-controls {
+        margin-top: 10px;
+    }
+    .robot-info {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 15px;
+    }
+    .battery-bar {
+        height: 20px;
+        border-radius: 10px;
+        background: #e9ecef;
+        overflow: hidden;
+    }
+    .battery-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    .alert-item {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 4px;
+    }
+    .chart-container {
+        position: relative;
+        height: 150px;
+        width: 100%;
+    }
+    .alert-item.danger {
+        background: #f8d7da;
+        border-left-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2 class="mb-4"><i class="bi bi-display"></i> 设备监控 - {{ device.name }}</h2>
+<h2 class="mb-4">
+    <i class="bi bi-robot"></i> 实时监控 - {{ device.name }}
+    <span class="status-indicator status-{{ device.status }}"></span>
+    <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% else %}secondary{% endif %} fs-6">
+        {{ device.get_status_display }}
+    </span>
+</h2>
 
 <div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">设备状态</div>
-            <div class="card-body">
-                <p><strong>状态：</strong>
-                    <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% else %}secondary{% endif %}">
-                        {{ device.get_status_display }}
-                    </span>
-                </p>
-                <p><strong>电量：</strong> {{ device.battery_level }}%</p>
-                <p><strong>运行模式：</strong> {{ device.get_run_mode_display }}</p>
-                <p><strong>喷洒速率：</strong> {{ device.spray_rate }} L/min</p>
+    <!-- 左侧：视频流 + 控制 -->
+    <div class="col-lg-7">
+        <!-- 视频监控 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-webcam"></i> 视频监控</h5>
+                <div>
+                    <button id="startCameraBtn" class="btn btn-success btn-sm" onclick="startCamera()">
+                        <i class="bi bi-play-fill"></i> 开启摄像头
+                    </button>
+                    <button id="stopCameraBtn" class="btn btn-danger btn-sm" onclick="stopCamera()" disabled>
+                        <i class="bi bi-stop-fill"></i> 关闭
+                    </button>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">位置信息</div>
-            <div class="card-body">
-                {% if latest_sensor %}
-                <p><strong>经度：</strong> {{ latest_sensor.longitude|default:"-" }}</p>
-                <p><strong>纬度：</strong> {{ latest_sensor.latitude|default:"-" }}</p>
-                <p><strong>速度：</strong> {{ latest_sensor.speed }} m/s</p>
-                <p><strong>航向角：</strong> {{ latest_sensor.heading }}°</p>
-                {% else %}
-                <p class="text-muted">暂无位置数据</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">传感器数据</div>
-            <div class="card-body">
-                {% if latest_sensor %}
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-value">{{ latest_sensor.temperature|default:"-" }}°C</div>
-                            <div class="stat-label">温度</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-value">{{ latest_sensor.humidity|default:"-" }}%</div>
-                            <div class="stat-label">湿度</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-value">{{ latest_sensor.light_intensity|default:"-" }} lux</div>
-                            <div class="stat-label">光照</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-value">{{ latest_sensor.soil_moisture|default:"-" }}%</div>
-                            <div class="stat-label">土壤墒情</div>
+            <div class="card-body p-0">
+                <div id="camera-container">
+                    <video id="camera-video" autoplay playsinline style="display:none;"></video>
+                    <canvas id="camera-canvas"></canvas>
+                    <div id="camera-placeholder" style="height: 400px; display: flex; align-items: center; justify-content: center; background: #1a1a2e; color: #666;">
+                        <div class="text-center">
+                            <i class="bi bi-camera-video-off" style="font-size: 4rem;"></i>
+                            <p class="mt-2">点击"开启摄像头"开始监控</p>
                         </div>
                     </div>
                 </div>
-                {% else %}
-                <p class="text-muted">暂无传感器数据</p>
-                {% endif %}
+            </div>
+        </div>
+
+        <!-- 机器人状态 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> 机器人状态</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="robot-info mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="bi bi-battery-full"></i> 电量</span>
+                                <span id="batteryValue">{{ device.battery_level }}%</span>
+                            </div>
+                            <div class="battery-bar">
+                                <div class="battery-fill bg-{% if device.battery_level > 50 %}success{% elif device.battery_level > 20 %}warning{% else %}danger{% endif %}" 
+                                     style="width: {{ device.battery_level }}%" id="batteryFill"></div>
+                            </div>
+                        </div>
+                        <p><i class="bi bi-speedometer2"></i> 速度：<span id="speedValue">0.0</span> m/s</p>
+                        <p><i class="bi bi-compass"></i> 航向角：<span id="headingValue">0</span>°</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><i class="bi bi-geo-alt"></i> 经度：<span id="lngValue">--</span></p>
+                        <p><i class="bi bi-geo-alt-fill"></i> 纬度：<span id="latValue">--</span></p>
+                        <p><i class="bi bi-clock"></i> 运行时间：<span id="runTime">00:00:00</span></p>
+                        <p><i class="bi bi-flag"></i> 模式：<span class="badge bg-info">{{ device.get_run_mode_display }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预警信息 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 实时预警</h5>
+            </div>
+            <div class="card-body" id="alertContainer">
+                <div class="text-muted text-center">暂无预警信息</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧：传感器 + 地图 -->
+    <div class="col-lg-5 d-flex flex-column">
+        <!-- 传感器仪表盘 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> 传感器数据</h5>
+                <small class="text-muted">实时更新中...</small>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="sensor-card temp">
+                            <div class="sensor-label"><i class="bi bi-thermometer-half"></i> 温度</div>
+                            <div class="sensor-value" id="tempValue">--°C</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="sensor-card humidity">
+                            <div class="sensor-label"><i class="bi bi-droplet-half"></i> 湿度</div>
+                            <div class="sensor-value" id="humidityValue">--%</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="sensor-card light">
+                            <div class="sensor-label"><i class="bi bi-brightness-high"></i> 光照强度</div>
+                            <div class="sensor-value" id="lightValue">-- lux</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="sensor-card soil">
+                            <div class="sensor-label"><i class="bi bi-flower1"></i> 土壤墒情</div>
+                            <div class="sensor-value" id="soilValue">--%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 传感器图表 -->
+                <div class="mt-4">
+                    <h6 class="mb-3"><i class="bi bi-graph-up"></i> 趋势图</h6>
+                    <div class="chart-container">
+                        <canvas id="sensorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 地图 -->
+        <div class="card mt-auto">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-map"></i> 位置轨迹</h5>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="centerOnRobot()">
+                        <i class="bi bi-crosshair"></i> 定位
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="clearTrack()">
+                        <i class="bi bi-trash"></i> 清除轨迹
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <div id="map"></div>
+            </div>
+            <div class="card-footer">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i> 
+                    蓝点: 当前位置 | 红色轨迹: 移动路径 | 点击地图可选中位置
+                </small>
             </div>
         </div>
     </div>
 </div>
 
-<div class="mt-3">
-    <a href="{% url 'monitoring:monitoring_dashboard' %}" class="btn btn-secondary">返回</a>
-    <a href="{% url 'control:control_panel' device.id %}" class="btn btn-primary">设备控制</a>
+<div class="mt-4">
+    <a href="{% url 'monitoring:monitoring_dashboard' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> 返回列表
+    </a>
+    <a href="{% url 'control:control_panel' device.id %}" class="btn btn-primary">
+        <i class="bi bi-gamepad"></i> 设备控制
+    </a>
+    <a href="{% url 'ai_recognition:inference_camera' %}" class="btn btn-success">
+        <i class="bi bi-eye"></i> AI智能检测
+    </a>
 </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// 全局变量
+let map = null;
+let robotMarker = null;
+let trackLine = null;
+let trackPoints = [];
+let robotPosition = [{{ device.location_lng|default:"116.397428" }}, {{ device.location_lat|default:"39.90923" }}];
+let sensorChart = null;
+let stream = null;
+let isCameraRunning = false;
+let simulationInterval = null;
+let runStartTime = null;
+let runTimerInterval = null;
+
+// 初始化地图
+function initMap() {
+    const defaultPos = [116.397428, 39.90923];
+    const deviceLng = {{ device.location_lng|default:"null" }};
+    const deviceLat = {{ device.location_lat|default:"null" }};
+    
+    if (deviceLng && deviceLat) {
+        robotPosition = [deviceLng, deviceLat];
+    } else {
+        robotPosition = defaultPos;
+    }
+    
+    map = L.map('map').setView(robotPosition, 17);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    const robotIcon = L.divIcon({
+        className: 'robot-marker',
+        html: '<div style="background:#2196F3;width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);"><i class="bi bi-robot" style="color:white;padding:5px;font-size:16px;"></i></div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+    });
+    
+    robotMarker = L.marker(robotPosition, { icon: robotIcon, title: '{{ device.name }}' }).addTo(map);
+    robotMarker.bindPopup('{{ device.name }}').openPopup();
+    
+    trackLine = L.polyline([], { color: '#FF5722', weight: 4, opacity: 0.8 }).addTo(map);
+    
+    trackPoints.push(robotPosition);
+    trackLine.setLatLngs(trackPoints);
+}
+
+// 中心定位
+function centerOnRobot() {
+    if (map && robotPosition) {
+        map.setView(robotPosition, 17);
+    }
+}
+
+// 清除轨迹
+function clearTrack() {
+    trackPoints = [robotPosition];
+    trackLine.setLatLngs(trackPoints);
+}
+
+// 更新地图位置
+function updateMapPosition(lng, lat) {
+    if (!map || !robotMarker) return;
+    
+    robotPosition = [lng, lat];
+    robotMarker.setLatLng(robotPosition);
+    trackPoints.push(robotPosition);
+    trackLine.setLatLngs(trackPoints);
+    map.setView(robotPosition);
+}
+
+// 模拟传感器数据
+function startSimulation() {
+    runStartTime = Date.now();
+    
+    updateRunTimer();
+    runTimerInterval = setInterval(updateRunTimer, 1000);
+    
+    simulationInterval = setInterval(() => {
+        // 模拟传感器数据
+        const temp = (20 + Math.random() * 15).toFixed(1);
+        const humidity = (40 + Math.random() * 40).toFixed(1);
+        const light = (20000 + Math.random() * 50000).toFixed(0);
+        const soil = (30 + Math.random() * 50).toFixed(1);
+        
+        document.getElementById('tempValue').textContent = temp + '°C';
+        document.getElementById('humidityValue').textContent = humidity + '%';
+        document.getElementById('lightValue').textContent = light + ' lux';
+        document.getElementById('soilValue').textContent = soil + '%';
+        
+        // 模拟速度
+        const speed = (Math.random() * 2).toFixed(2);
+        document.getElementById('speedValue').textContent = speed;
+        
+        // 模拟航向角
+        const heading = Math.floor(Math.random() * 360);
+        document.getElementById('headingValue').textContent = heading;
+        
+        // 模拟电池消耗
+        let battery = parseFloat(document.getElementById('batteryValue').textContent);
+        if (battery > 0) {
+            battery = Math.max(0, battery - 0.01);
+            document.getElementById('batteryValue').textContent = battery.toFixed(1) + '%';
+            const batteryFill = document.getElementById('batteryFill');
+            batteryFill.style.width = battery + '%';
+            batteryFill.className = 'battery-fill bg-' + 
+                (battery > 50 ? 'success' : battery > 20 ? 'warning' : 'danger');
+        }
+        
+        // 模拟位置变化
+        if (Math.random() > 0.7) {
+            const lng = robotPosition[0] + (Math.random() - 0.5) * 0.0001;
+            const lat = robotPosition[1] + (Math.random() - 0.5) * 0.0001;
+            document.getElementById('lngValue').textContent = lng.toFixed(6);
+            document.getElementById('latValue').textContent = lat.toFixed(6);
+            updateMapPosition(lng, lat);
+        }
+        
+        // 模拟预警
+        checkAlerts(temp, humidity, soil, battery);
+        
+        // 更新图表
+        updateSensorChart(temp, humidity, light, soil);
+        
+    }, 2000);
+}
+
+function updateRunTimer() {
+    if (!runStartTime) return;
+    const elapsed = Math.floor((Date.now() - runStartTime) / 1000);
+    const hours = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+    const minutes = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+    const seconds = (elapsed % 60).toString().padStart(2, '0');
+    document.getElementById('runTime').textContent = `${hours}:${minutes}:${seconds}`;
+}
+
+// 预警检查
+function checkAlerts(temp, humidity, soil, battery) {
+    const alerts = [];
+    
+    if (parseFloat(temp) > 32) {
+        alerts.push({ type: 'warning', msg: '温度过高，建议暂停作业' });
+    }
+    if (parseFloat(humidity) > 80) {
+        alerts.push({ type: 'warning', msg: '湿度过大，可能影响喷洒效果' });
+    }
+    if (parseFloat(soil) > 70) {
+        alerts.push({ type: 'danger', msg: '土壤过湿，不宜进行灌溉' });
+    }
+    if (battery < 20) {
+        alerts.push({ type: 'danger', msg: '电量过低，请及时充电' });
+    }
+    
+    const container = document.getElementById('alertContainer');
+    if (alerts.length > 0) {
+        container.innerHTML = alerts.map(a => 
+            `<div class="alert-item ${a.type}">
+                <i class="bi bi-exclamation-circle"></i> ${a.msg}
+            </div>`
+        ).join('');
+    } else {
+        container.innerHTML = '<div class="text-success text-center"><i class="bi bi-check-circle"></i> 运行正常</div>';
+    }
+}
+
+// 初始化图表
+function initSensorChart() {
+    const ctx = document.getElementById('sensorChart').getContext('2d');
+    sensorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: '温度(°C)',
+                    data: [],
+                    borderColor: '#f5576c',
+                    backgroundColor: 'rgba(245, 87, 108, 0.2)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: '湿度(%)',
+                    data: [],
+                    borderColor: '#00bcd4',
+                    backgroundColor: 'rgba(0, 188, 212, 0.2)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: '温度(°C)' },
+                    suggestedMin: 15,
+                    suggestedMax: 40
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: { display: true, text: '湿度(%)' },
+                    suggestedMin: 30,
+                    suggestedMax: 90,
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+}
+
+function updateSensorChart(temp, humidity) {
+    if (!sensorChart) return;
+    
+    const now = new Date().toLocaleTimeString();
+    sensorChart.data.labels.push(now);
+    sensorChart.data.datasets[0].data.push(parseFloat(temp));
+    sensorChart.data.datasets[1].data.push(parseFloat(humidity));
+    
+    if (sensorChart.data.labels.length > 10) {
+        sensorChart.data.labels.shift();
+        sensorChart.data.datasets[0].data.shift();
+        sensorChart.data.datasets[1].data.shift();
+    }
+    
+    sensorChart.update();
+}
+
+// 摄像头功能
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
+            audio: false
+        });
+        
+        const video = document.getElementById('camera-video');
+        const canvas = document.getElementById('camera-canvas');
+        const placeholder = document.getElementById('camera-placeholder');
+        
+        video.srcObject = stream;
+        video.style.display = 'block';
+        placeholder.style.display = 'none';
+        
+        const ctx = canvas.getContext('2d');
+        
+        video.onloadedmetadata = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        };
+        
+        isCameraRunning = true;
+        document.getElementById('startCameraBtn').disabled = true;
+        document.getElementById('stopCameraBtn').disabled = false;
+        
+        // 开始模拟数据
+        startSimulation();
+        
+    } catch (err) {
+        alert('无法访问摄像头: ' + err.message);
+        console.error(err);
+    }
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    document.getElementById('camera-video').style.display = 'none';
+    document.getElementById('camera-placeholder').style.display = 'flex';
+    document.getElementById('startCameraBtn').disabled = false;
+    document.getElementById('stopCameraBtn').disabled = true;
+    
+    isCameraRunning = false;
+    
+    if (simulationInterval) {
+        clearInterval(simulationInterval);
+        simulationInterval = null;
+    }
+    if (runTimerInterval) {
+        clearInterval(runTimerInterval);
+        runTimerInterval = null;
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+    initSensorChart();
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}

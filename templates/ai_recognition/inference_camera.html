@@ -115,17 +115,49 @@ let runStartTime = null;
 let runTimer = null;
 let lastDetections = [];
 
+async function loadCameras() {
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        const cameraSelect = document.getElementById('cameraSelect');
+        cameraSelect.innerHTML = '';
+        
+        if (videoDevices.length === 0) {
+            cameraSelect.innerHTML = '<option value="">无可用摄像头</option>';
+            return;
+        }
+        
+        videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `摄像头 ${index + 1}`;
+            cameraSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error('获取摄像头列表失败:', err);
+    }
+}
+
+loadCameras();
+
 document.getElementById('confidenceRange').addEventListener('input', function(e) {
     document.getElementById('confidenceValue').textContent = e.target.value;
 });
 
 async function startCamera() {
-    const cameraId = document.getElementById('cameraSelect').value;
+    const cameraSelect = document.getElementById('cameraSelect');
+    const cameraId = cameraSelect.value;
     
     try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { deviceId: { exact: cameraId } } 
-        });
+        const constraints = {
+            video: {
+                deviceId: cameraId ? { exact: cameraId } : undefined,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
         
         video.onloadedmetadata = () => {

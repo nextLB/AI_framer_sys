@@ -69,6 +69,8 @@ def statistical_report_list(request):
 
 @login_required
 def generate_report(request):
+    today = timezone.now().date()
+    
     if request.method == 'POST':
         report_type = request.POST.get('report_type')
         device_id = request.POST.get('device_id')
@@ -104,10 +106,13 @@ def generate_report(request):
         )
         
         messages.success(request, '报告生成成功')
-        return redirect('statistical_report_list')
+        return redirect('data_analysis:statistical_report_list')
     
     devices = RobotDevice.objects.all()
-    return render(request, 'data_analysis/generate_report.html', {'devices': devices})
+    return render(request, 'data_analysis/generate_report.html', {
+        'devices': devices,
+        'today': today.isoformat(),
+    })
 
 
 @login_required
@@ -152,10 +157,79 @@ def export_data(request):
     
     if export_type == 'sessions':
         sessions = WorkSession.objects.all()
-        data = [[
-            s.id, s.device.name, s.start_time, s.end_time,
-            s.duration, s.total_distance, s.area_covered, s.pesticide_used, s.status
-        ] for s in sessions]
-        headers = ['ID', '设备', '开始时间', '结束时间', '时长(秒)', '距离(m)', '面积(亩)', '农药(L)', '状态']
+        data = []
+        headers = ['ID', '设备名称', '开始时间', '结束时间', '持续时长(秒)', '行驶距离(m)', '作业面积(亩)', '农药使用(L)', '状态']
+        for s in sessions:
+            data.append([
+                s.id,
+                s.device.name if s.device else '',
+                s.start_time.strftime('%Y-%m-%d %H:%M:%S') if s.start_time else '',
+                s.end_time.strftime('%Y-%m-%d %H:%M:%S') if s.end_time else '',
+                s.duration or 0,
+                s.total_distance or 0,
+                s.area_covered or 0,
+                s.pesticide_used or 0,
+                s.get_status_display() if s.status else '',
+            ])
+        
+        if format_type == 'csv':
+            import csv
+            from django.http import HttpResponse
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="work_sessions_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+            response.write('\ufeff')
+            writer = csv.writer(response)
+            writer.writerow(headers)
+            writer.writerows(data)
+            return response
+        elif format_type == 'excel':
+            try:
+                import openpyxl
+                from io import BytesIO
+                from django.http import HttpResponse
+                
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.title = '作业会话'
+                
+                for col, header in enumerate(headers, 1):
+                    ws.cell(row=1, column=col, value=header)
+                
+                for row, row_data in enumerate(data, 2):
+                    for col, value in enumerate(row_data, 1):
+                        ws.cell(row=row, column=col, value=value)
+                
+                buffer = BytesIO()
+                wb.save(buffer)
+                buffer.seek(0)
+                
+                response = HttpResponse(buffer.getvalue(), content_type='application/vnd.ms-excel')
+                response['Content-Disposition'] = f'attachment; filename="work_sessions_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+                return response
+            except ImportError:
+                return JsonResponse({'error': '请安装 openpyxl 库: pip install openpyxl'})
+        
+        return JsonResponse({'data': data, 'headers': headers})
     
-    return JsonResponse({'data': data, 'headers': headers})
+    elif export_type == 'report':
+        report_id = request.GET.get('id')
+        if report_id:
+            try:
+                report = StatisticalReport.objects.get(id=report_id)
+                data = {
+                    'report_type': report.get_report_type_display(),
+                    'period': f'{report.start_date} ~ {report.end_date}',
+                    'device': report.device.name if report.device else '全部设备',
+                    'total_work_hours': report.total_work_hours,
+                    'total_area': report.total_area,
+                    'total_pesticide': report.total_pesticide,
+                    'pest_alerts': report.pest_alert_count,
+                    'generated_at': report.generated_at.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+                return JsonResponse({'report': data})
+            except StatisticalReport.DoesNotExist:
+                return JsonResponse({'error': '报告不存在'})
+        
+        return JsonResponse({'error': '缺少报告ID'})
+    
+    return JsonResponse({'error': '无效的导出类型'})

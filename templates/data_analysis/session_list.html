@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}作业会话列表 - 数据分析{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-list-check"></i> 作业会话列表</h2>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">筛选条件</h5>
+        <a href="{% url 'data_analysis:generate_report' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle"></i> 生成报告
+        </a>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">选择设备</label>
+                <select name="device_id" class="form-select">
+                    <option value="">全部设备</option>
+                    {% for device in devices %}
+                    <option value="{{ device.id }}" {% if request.GET.device_id == device.id|stringformat:"s" %}selected{% endif %}>
+                        {{ device.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <a href="{% url 'data_analysis:work_session_list' %}" class="btn btn-secondary w-100">
+                    <i class="bi bi-arrow-clockwise"></i> 重置
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">会话记录</h5>
+        <div class="btn-group">
+            <button onclick="exportData('csv')" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-spreadsheet"></i> 导出CSV
+            </button>
+            <button onclick="exportData('excel')" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-excel"></i> 导出Excel
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>设备名称</th>
+                        <th>开始时间</th>
+                        <th>结束时间</th>
+                        <th>持续时长</th>
+                        <th>作业面积(亩)</th>
+                        <th>行驶距离(m)</th>
+                        <th>农药使用(L)</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in page_obj %}
+                    <tr>
+                        <td>{{ session.id }}</td>
+                        <td>{{ session.device.name }}</td>
+                        <td>{{ session.start_time|date:"Y-m-d H:i" }}</td>
+                        <td>{{ session.end_time|date:"Y-m-d H:i"|default:"-" }}</td>
+                        <td>{{ session.duration|default:"0"|floatformat:0 }}秒</td>
+                        <td>{{ session.area_covered|default:"0"|floatformat:2 }}</td>
+                        <td>{{ session.total_distance|default:"0"|floatformat:1 }}</td>
+                        <td>{{ session.pesticide_used|default:"0"|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge bg-{% if session.status == 'completed' %}success{% elif session.status == 'running' %}primary{% else %}secondary{% endif %}">
+                                {{ session.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'data_analysis:session_detail' session.id %}" class="btn btn-sm btn-info">
+                                <i class="bi bi-eye"></i> 详情
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">首页</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页</span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">尾页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-3">暂无作业会话记录</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportData(format) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('format', format);
+    params.set('export', 'true');
+    window.location.href = '{% url "data_analysis:export_data" %}?' + params.toString();
+}
+</script>
+{% endblock %}

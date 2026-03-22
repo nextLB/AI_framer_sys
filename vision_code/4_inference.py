@@ -145,7 +145,7 @@ def inference_camera(model_path, conf=0.25, camera_id=0):
 def main():
     parser = argparse.ArgumentParser(description='YOLOv8 Inference for Agricultural Plant Disease')
     parser.add_argument('--weights', type=str, 
-                        default='../outputs/agriculture_yolov8/weights/best.pt',
+                        default='./outputs/agriculture_yolov8/weights/best.pt',
                         help='Path to model weights')
     parser.add_argument('--source', type=str, 
                         default=None,

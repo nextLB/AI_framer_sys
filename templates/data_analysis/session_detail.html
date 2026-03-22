@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}作业详情 - {{ session.id }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">
+    <i class="bi bi-clipboard-data"></i> 作业会话详情
+    <a href="{% url 'data_analysis:work_session_list' %}" class="btn btn-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> 返回列表
+    </a>
+</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-robot"></i> 设备信息</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>设备名称</strong></td>
+                        <td>{{ session.device.name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>设备ID</strong></td>
+                        <td>{{ session.device.device_id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>设备状态</strong></td>
+                        <td>
+                            <span class="badge bg-{% if session.device.status == 'online' %}success{% elif session.device.status == 'working' %}primary{% else %}secondary{% endif %}">
+                                {{ session.device.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock"></i> 时间信息</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>开始时间</strong></td>
+                        <td>{{ session.start_time|date:"Y-m-d H:i:s" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>结束时间</strong></td>
+                        <td>{{ session.end_time|date:"Y-m-d H:i:s"|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>持续时长</strong></td>
+                        <td>{{ session.duration|default:"0"|floatformat:0 }} 秒 ({{ session.duration|default:"0"|divide:3600|floatformat:2 }} 小时)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>会话状态</strong></td>
+                        <td>
+                            <span class="badge bg-{% if session.status == 'completed' %}success{% elif session.status == 'running' %}primary{% else %}secondary{% endif %}">
+                                {{ session.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> 作业统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="stat-card bg-primary text-white">
+                            <div class="stat-value">{{ session.area_covered|default:"0"|floatformat:2 }}</div>
+                            <div class="stat-label">作业面积 (亩)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card bg-success text-white">
+                            <div class="stat-value">{{ session.total_distance|default:"0"|floatformat:1 }}</div>
+                            <div class="stat-label">行驶距离 (m)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card bg-warning text-dark">
+                            <div class="stat-value">{{ session.pesticide_used|default:"0"|floatformat:2 }}</div>
+                            <div class="stat-label">农药使用量 (L)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card bg-info text-white">
+                            <div class="stat-value">{{ session.ai_recognition_count|default:"0" }}</div>
+                            <div class="stat-label">AI识别次数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if session.notes %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-sticky"></i> 备注信息</h5>
+    </div>
+    <div class="card-body">
+        <p>{{ session.notes }}</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-graph-up"></i> 作业效率分析</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <p><strong>平均作业速度：</strong> 
+                    {% if session.duration > 0 %}
+                    {{ session.total_distance|default:"0"|divide:session.duration|floatformat:2 }} m/s
+                    {% else %}--{% endif %}
+                </p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>农药覆盖率：</strong> 
+                    {% if session.area_covered > 0 %}
+                    {{ session.pesticide_used|default:"0"|divide:session.area_covered|floatformat:2 }} L/亩
+                    {% else %}--{% endif %}
+                </p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>作业效率：</strong> 
+                    {% if session.duration > 0 %}
+                    {{ session.area_covered|default:"0"|multiply:60|divide:session.duration|floatformat:2 }} 亩/小时
+                    {% else %}--{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

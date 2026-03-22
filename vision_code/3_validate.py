@@ -45,7 +45,7 @@ def validate_model(model_path, data_yaml, imgsz=640, batch=16, conf=0.001, iou=0
 def main():
     parser = argparse.ArgumentParser(description='Validate YOLOv8 model')
     parser.add_argument('--weights', type=str, 
-                        default='/home/next_lb/桌面/next/基于AI的农业植保机器人监控软件系统/outputs/agriculture_yolov8/weights/best.pt',
+                        default='./outputs/agriculture_yolov8/weights/best.pt',
                         help='Path to model weights')
     parser.add_argument('--data', type=str, 
                         default='/home/next_lb/桌面/next/基于AI的农业植保机器人监控软件系统/datasets/yolo_dataset/dataset.yaml',

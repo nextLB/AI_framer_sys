@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}生成统计报告{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-file-earmark-plus"></i> 生成统计报告</h2>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">报告配置</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>报告类型</strong></label>
+                        <select name="report_type" class="form-select" required>
+                            <option value="">请选择报告类型</option>
+                            <option value="daily">日报</option>
+                            <option value="weekly">周报</option>
+                            <option value="monthly">月报</option>
+                            <option value="yearly">年报</option>
+                        </select>
+                        <small class="text-muted">选择报告的统计周期</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>设备筛选</strong></label>
+                        <select name="device_id" class="form-select">
+                            <option value="">全部设备</option>
+                            {% for device in devices %}
+                            <option value="{{ device.id }}">{{ device.name }} ({{ device.device_id }})</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">留空表示统计所有设备</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label"><strong>开始日期</strong></label>
+                                <input type="date" name="start_date" class="form-control" required 
+                                       value="{{ start_date|default:'2024-01-01' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label"><strong>结束日期</strong></label>
+                                <input type="date" name="end_date" class="form-control" required 
+                                       value="{{ end_date|default:today }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <h6><i class="bi bi-info-circle"></i> 报告内容说明</h6>
+                        <ul class="text-muted small">
+                            <li>作业时长统计（小时）</li>
+                            <li>作业面积统计（亩）</li>
+                            <li>农药使用量统计（升）</li>
+                            <li>病虫害预警次数统计</li>
+                            <li>机器人利用率分析</li>
+                            <li>各设备作业对比</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-graph-up"></i> 生成报告
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <a href="{% url 'data_analysis:statistical_report_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> 返回报告列表
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

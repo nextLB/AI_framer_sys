@@ -118,7 +118,7 @@ def recognition_config_create(request):
             confidence_threshold=confidence_threshold
         )
         messages.success(request, '配置已创建')
-        return redirect('recognition_config_list')
+        return redirect('ai_recognition:recognition_config_list')
     
     return render(request, 'ai_recognition/config_form.html', {'action': '创建'})
 
@@ -134,7 +134,7 @@ def recognition_config_edit(request, config_id):
         config.is_active = request.POST.get('is_active') == 'on'
         config.save()
         messages.success(request, '配置已更新')
-        return redirect('recognition_config_list')
+        return redirect('ai_recognition:recognition_config_list')
     
     return render(request, 'ai_recognition/config_form.html', {
         'config': config,
@@ -175,7 +175,7 @@ def model_upload(request):
         )
         
         messages.success(request, f'模型 {name} 上传成功')
-        return redirect('model_list')
+        return redirect('ai_recognition:model_list')
     
     return render(request, 'ai_recognition/model_upload.html')
 
@@ -185,7 +185,7 @@ def model_delete(request, model_id):
     model = get_object_or_404(AIModel, id=model_id)
     model.delete()
     messages.success(request, '模型已删除')
-    return redirect('model_list')
+    return redirect('ai_recognition:model_list')
 
 
 @login_required
@@ -230,7 +230,7 @@ def training_create(request):
         )
         
         messages.success(request, f'训练任务 {name} 已创建')
-        return redirect('training_list')
+        return redirect('ai_recognition:training_list')
     
     return render(request, 'ai_recognition/training_create.html')
 
@@ -292,7 +292,7 @@ def training_delete(request, task_id):
     remove_trainer(task_id)
     task.delete()
     messages.success(request, '训练任务已删除')
-    return redirect('training_list')
+    return redirect('ai_recognition:training_list')
 
 
 @login_required
@@ -336,8 +336,9 @@ def inference_image(request):
             for chunk in image_file.chunks():
                 destination.write(chunk)
         
+        default_model_path = os.path.join(settings.BASE_DIR, 'vision_code', 'outputs', 'agriculture_yolov8', 'weights', 'best.pt')
         inference = YOLOInference(
-            model_path=model.model_path if model and model.model_path else 'yolov8n.pt',
+            model_path=model.model_path if model and model.model_path else default_model_path,
             confidence=confidence
         )
         
@@ -401,8 +402,9 @@ def inference_video(request):
             for chunk in video_file.chunks():
                 destination.write(chunk)
         
+        default_model_path = os.path.join(settings.BASE_DIR, 'vision_code', 'outputs', 'agriculture_yolov8', 'weights', 'best.pt')
         inference = YOLOInference(
-            model_path=model.model_path if model and model.model_path else 'yolov8n.pt',
+            model_path=model.model_path if model and model.model_path else default_model_path,
             confidence=confidence
         )
         
@@ -464,8 +466,9 @@ def camera_detect(request):
             except AIModel.DoesNotExist:
                 pass
         
+        default_model_path = os.path.join(settings.BASE_DIR, 'vision_code', 'outputs', 'agriculture_yolov8', 'weights', 'best.pt')
         inference = YOLOInference(
-            model_path=model.model_path if model and model.model_path else 'yolov8n.pt',
+            model_path=model.model_path if model and model.model_path else default_model_path,
             confidence=confidence
         )
         
