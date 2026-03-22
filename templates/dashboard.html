@@ -94,8 +94,11 @@
                     <a href="{% url 'monitoring:monitoring_dashboard' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-display"></i> 实时监控
                     </a>
-                    <a href="{% url 'ai_recognition:recognition_dashboard' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-cpu"></i> AI识别
+                    <a href="{% url 'ai_recognition:training_list' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-gear-wide-connected"></i> AI模型训练
+                    </a>
+                    <a href="{% url 'ai_recognition:inference_camera' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-webcam"></i> 实时检测
                     </a>
                     <a href="{% url 'data_analysis:big_screen' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-collection-play"></i> 数据大屏

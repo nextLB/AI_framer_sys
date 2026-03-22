@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}创建训练任务{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-gear-wide-connected"></i> 创建模型训练任务</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h6 class="text-primary mb-3"><i class="bi bi-info-circle"></i> 基本信息</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">任务名称</label>
+                                <input type="text" name="name" class="form-control" required placeholder="例如: 农作物病虫害检测模型">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">基础模型架构</label>
+                                <select name="model_type" class="form-select" required>
+                                    <option value="yolov8n">YOLOv8 Nano (最轻量)</option>
+                                    <option value="yolov8s">YOLOv8 Small</option>
+                                    <option value="yolov8m" selected>YOLOv8 Medium (推荐)</option>
+                                    <option value="yolov8l">YOLOv8 Large</option>
+                                    <option value="yolov8x">YOLOv8 XLarge (最高精度)</option>
+                                    <option value="yolo11n">YOLO11 Nano</option>
+                                    <option value="yolo11s">YOLO11 Small</option>
+                                    <option value="yolo11m">YOLO11 Medium</option>
+                                    <option value="yolo11l">YOLO11 Large</option>
+                                    <option value="yolo11x">YOLO11 XLarge</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-primary mb-3"><i class="bi bi-folder"></i> 数据集配置</h6>
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">数据集 YAML 文件路径</label>
+                                <input type="text" name="dataset_path" class="form-control" required 
+                                       placeholder="/path/to/dataset.yaml">
+                                <small class="text-muted">数据集需要包含 train/val/test 三个部分，每个部分包含 images 和 labels 文件夹</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-primary mb-3"><i class="bi bi-sliders"></i> 训练参数</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">训练轮数 (Epochs)</label>
+                                <input type="number" name="epochs" class="form-control" value="100" min="1" max="1000">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">批次大小 (Batch Size)</label>
+                                <input type="number" name="batch_size" class="form-control" value="8" min="1" max="128">
+                                <small class="text-muted">RTX 3060 12GB 推荐 8-16</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">图像尺寸 (Image Size)</label>
+                                <input type="number" name="image_size" class="form-control" value="640" min="320" max="1280" step="32">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">早停耐心值 (Patience)</label>
+                                <input type="number" name="patience" class="form-control" value="20" min="5" max="100">
+                                <small class="text-muted">验证集性能不提升时等待轮数</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">训练设备</label>
+                                <select name="device" class="form-select">
+                                    <option value="0">GPU 0 (CUDA)</option>
+                                    <option value="1">GPU 1</option>
+                                    <option value="cpu">CPU</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">优化器</label>
+                                <select name="optimizer" class="form-select">
+                                    <option value="AdamW">AdamW</option>
+                                    <option value="SGD">SGD</option>
+                                    <option value="Adam">Adam</option>
+                                    <option value="RMSProp">RMSProp</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-primary mb-3"><i class="bi bi-graph-up"></i> 优化器参数</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">初始学习率</label>
+                                <input type="number" name="learning_rate" class="form-control" value="0.001" step="0.0001" min="0.00001">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">权重衰减</label>
+                                <input type="number" name="weight_decay" class="form-control" value="0.0005" step="0.0001" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">动量 (SGD)</label>
+                                <input type="number" name="momentum" class="form-control" value="0.937" step="0.001" min="0" max="1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-play-fill"></i> 创建训练任务
+                        </button>
+                        <a href="{% url 'ai_recognition:training_list' %}" class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

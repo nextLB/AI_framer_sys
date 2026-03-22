@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}模型训练{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-gear-wide-connected"></i> 模型训练</h2>
+            <a href="{% url 'ai_recognition:training_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> 创建训练任务
+            </a>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>任务名称</th>
+                                <th>基础模型</th>
+                                <th>数据集</th>
+                                <th>进度</th>
+                                <th>状态</th>
+                                <th>mAP@0.5</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in page_obj %}
+                            <tr>
+                                <td>{{ task.id }}</td>
+                                <td>{{ task.name }}</td>
+                                <td><span class="badge bg-info">{{ task.model_type }}</span></td>
+                                <td><code>{{ task.dataset_path|truncatechars:30 }}</code></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%">
+                                            {{ task.progress }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if task.status == 'pending' %}
+                                    <span class="badge bg-secondary">等待中</span>
+                                    {% elif task.status == 'running' %}
+                                    <span class="badge bg-success">训练中</span>
+                                    {% elif task.status == 'paused' %}
+                                    <span class="badge bg-warning">已暂停</span>
+                                    {% elif task.status == 'completed' %}
+                                    <span class="badge bg-primary">已完成</span>
+                                    {% elif task.status == 'failed' %}
+                                    <span class="badge bg-danger">失败</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ task.best_map|default:"-" }}</td>
+                                <td>{{ task.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'ai_recognition:training_detail' task.id %}" class="btn btn-sm btn-outline-primary">详情</a>
+                                    {% if task.status == 'pending' %}
+                                    <button onclick="startTraining({{ task.id }})" class="btn btn-sm btn-success">开始</button>
+                                    {% elif task.status == 'running' %}
+                                    <button onclick="stopTraining({{ task.id }})" class="btn btn-sm btn-warning">停止</button>
+                                    {% endif %}
+                                    <a href="{% url 'ai_recognition:training_delete' task.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定删除此训练任务?')">删除</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">暂无训练任务</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if page_obj.has_other_pages %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">首页</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">末页</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function startTraining(taskId) {
+    fetch(`/ai/training/${taskId}/start/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        location.reload();
+    });
+}
+
+function stopTraining(taskId) {
+    fetch(`/ai/training/${taskId}/stop/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        location.reload();
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

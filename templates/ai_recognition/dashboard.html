@@ -3,13 +3,98 @@
 {% block title %}AI识别 - 农业植保机器人监控系统{% endblock %}
 
 {% block content %}
-<h2 class="mb-4"><i class="bi bi-cpu"></i> AI智能识别</h2>
+<h2 class="mb-4"><i class="bi bi-cpu"></i> AI智能识别中心</h2>
+
+<div class="row">
+    <div class="col-md-3">
+        <a href="{% url 'ai_recognition:training_list' %}" class="text-decoration-none">
+            <div class="card border-primary mb-3">
+                <div class="card-body text-center">
+                    <i class="bi bi-gear-wide-connected" style="font-size: 3rem; color: #0d6efd;"></i>
+                    <h5 class="mt-3">模型训练</h5>
+                    <p class="text-muted small">训练YOLOv8模型</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'ai_recognition:inference_image' %}" class="text-decoration-none">
+            <div class="card border-success mb-3">
+                <div class="card-body text-center">
+                    <i class="bi bi-image" style="font-size: 3rem; color: #198754;"></i>
+                    <h5 class="mt-3">图片检测</h5>
+                    <p class="text-muted small">上传图片进行检测</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'ai_recognition:inference_video' %}" class="text-decoration-none">
+            <div class="card border-warning mb-3">
+                <div class="card-body text-center">
+                    <i class="bi bi-film" style="font-size: 3rem; color: #ffc107;"></i>
+                    <h5 class="mt-3">视频检测</h5>
+                    <p class="text-muted small">上传视频批量检测</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'ai_recognition:inference_camera' %}" class="text-decoration-none">
+            <div class="card border-danger mb-3">
+                <div class="card-body text-center">
+                    <i class="bi bi-webcam" style="font-size: 3rem; color: #dc3545;"></i>
+                    <h5 class="mt-3">实时检测</h5>
+                    <p class="text-muted small">摄像头实时识别</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-md-4">
+        <a href="{% url 'ai_recognition:model_list' %}" class="text-decoration-none">
+            <div class="card border-info mb-3">
+                <div class="card-body text-center">
+                    <i class="bi bi-box-seam" style="font-size: 2.5rem; color: #0dcaf0;"></i>
+                    <h6 class="mt-2">模型管理</h6>
+                    <p class="text-muted small">管理AI模型</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'ai_recognition:recognition_config_list' %}" class="text-decoration-none">
+            <div class="card border-secondary mb-3">
+                <div class="card-body text-center">
+                    <i class="bi bi-sliders" style="font-size: 2.5rem; color: #6c757d;"></i>
+                    <h6 class="mt-2">识别配置</h6>
+                    <p class="text-muted small">配置参数</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'ai_recognition:inference_history' %}" class="text-decoration-none">
+            <div class="card border-dark mb-3">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock-history" style="font-size: 2.5rem; color: #212529;"></i>
+                    <h6 class="mt-2">历史记录</h6>
+                    <p class="text-muted small">查看推理历史</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<hr>
 
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">识别任务</h5>
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-list-ul"></i> 识别任务记录</h5>
             </div>
             <div class="card-body">
                 {% if tasks %}
@@ -46,27 +131,6 @@
                 {% else %}
                 <p class="text-muted text-center">暂无识别任务</p>
                 {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">快速开始</div>
-            <div class="card-body">
-                <p>选择设备开始AI识别任务：</p>
-                <a href="{% url 'devices:device_list' %}" class="btn btn-primary">选择设备</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">识别配置</div>
-            <div class="card-body">
-                <p>管理AI识别模型配置</p>
-                <a href="{% url 'ai_recognition:recognition_config_list' %}" class="btn btn-secondary">配置管理</a>
             </div>
         </div>
     </div>

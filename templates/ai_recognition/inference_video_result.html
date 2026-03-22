@@ -1,0 +1,85 @@
+{% extends 'ai_recognition/inference.html' %}
+
+{% block inference_content %}
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-check-circle"></i> 视频检测结果</h5>
+    </div>
+    <div class="card-body">
+        {% if result_path %}
+        <div class="text-center mb-4">
+            <h6>检测结果视频</h6>
+            <video controls style="max-width: 100%; border-radius: 8px;">
+                <source src="{{ result_path }}" type="video/mp4">
+                您的浏览器不支持视频播放
+            </video>
+        </div>
+        {% endif %}
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ result.total_frames }}</h3>
+                        <p>总帧数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ result.total_detections }}</h3>
+                        <p>总检测数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ result.processing_time|floatformat:1 }}s</h3>
+                        <p>处理时间</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning">
+                    <div class="card-body text-center">
+                        <h3>{{ result.total_frames|add:result.total_detections|default:0|add:result.processing_time|floatformat:0|default:"-" }}</h3>
+                        <p>FPS</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if result.class_counts %}
+        <div class="mt-4">
+            <h6>检测类别统计</h6>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>类别名称</th>
+                        <th>检测数量</th>
+                        <th>占比</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for class_name, count in result.class_counts.items %}
+                    <tr>
+                        <td><span class="badge bg-primary">{{ class_name }}</span></td>
+                        <td>{{ count }}</td>
+                        <td>{{ count|add:0|multiply:100|default:0|add:result.total_detections|default:1|floatformat:1 }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        
+        <div class="mt-4">
+            <a href="{% url 'ai_recognition:inference_video' %}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> 返回继续检测
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

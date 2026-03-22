@@ -1,0 +1,65 @@
+{% extends 'ai_recognition/inference.html' %}
+
+{% block inference_content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-film"></i> 视频检测</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">选择AI模型</label>
+                        <select name="model_id" class="form-select">
+                            <option value="">默认模型</option>
+                            {% for model in models %}
+                            <option value="{{ model.id }}">{{ model.name }} ({{ model.model_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">置信度阈值</label>
+                        <input type="range" class="form-range" name="confidence" min="0" max="1" step="0.05" value="0.25" id="confidenceRange">
+                        <div class="d-flex justify-content-between">
+                            <small>0</small>
+                            <span id="confidenceValue">0.25</span>
+                            <small>1</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">选择视频文件</label>
+                        <input type="file" name="video" class="form-control" accept="video/*" required>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 视频处理可能需要较长时间，请耐心等待
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-search"></i> 开始检测
+                    </button>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <i class="bi bi-film" style="font-size: 8rem; color: #dee2e6;"></i>
+                        <p class="text-muted mt-2">请上传视频文件</p>
+                        <p class="small text-muted">支持 MP4, AVI, MOV 格式</p>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('confidenceRange').addEventListener('input', function(e) {
+    document.getElementById('confidenceValue').textContent = e.target.value;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}训练详情{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-info-circle"></i> 训练任务详情 - {{ task.name }}</h2>
+            <a href="{% url 'ai_recognition:training_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-graph-up"></i> 训练进度</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>训练进度</span>
+                                <span id="progress-text">{{ task.progress }}%</span>
+                            </div>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     id="progress-bar" style="width: {{ task.progress }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <h4 id="current-epoch">{{ task.current_epoch }}</h4>
+                                <p class="text-muted">当前轮数 / {{ task.epochs }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h4 id="best-map">{{ task.best_map|default:"-" }}</h4>
+                                <p class="text-muted">最佳 mAP@0.5</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h4>
+                                    {% if task.status == 'running' %}
+                                    <span class="badge bg-success">训练中</span>
+                                    {% elif task.status == 'completed' %}
+                                    <span class="badge bg-primary">已完成</span>
+                                    {% elif task.status == 'failed' %}
+                                    <span class="badge bg-danger">失败</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+                                    {% endif %}
+                                </h4>
+                                <p class="text-muted">状态</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if task.trained_model %}
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-check-circle"></i> 训练完成 - 模型信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <tr>
+                                <th>模型名称</th>
+                                <td>{{ task.trained_model.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>模型类型</th>
+                                <td>{{ task.trained_model.get_model_type_display }}</td>
+                            </tr>
+                            <tr>
+                                <th>类别数量</th>
+                                <td>{{ task.trained_model.num_classes }}</td>
+                            </tr>
+                            <tr>
+                                <th>准确率</th>
+                                <td>{{ task.trained_model.accuracy|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <th>模型路径</th>
+                                <td><code>{{ task.trained_model.model_path }}</code></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if task.error_message %}
+                <div class="card mb-4 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 错误信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre class="text-danger">{{ task.error_message }}</pre>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-sliders"></i> 训练配置</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <th>基础模型</th>
+                                <td>{{ task.model_type }}</td>
+                            </tr>
+                            <tr>
+                                <th>数据集</th>
+                                <td><small>{{ task.dataset_path }}</small></td>
+                            </tr>
+                            <tr>
+                                <th>批次大小</th>
+                                <td>{{ task.batch_size }}</td>
+                            </tr>
+                            <tr>
+                                <th>图像尺寸</th>
+                                <td>{{ task.image_size }}</td>
+                            </tr>
+                            <tr>
+                                <th>学习率</th>
+                                <td>{{ task.learning_rate }}</td>
+                            </tr>
+                            <tr>
+                                <th>优化器</th>
+                                <td>{{ task.optimizer }}</td>
+                            </tr>
+                            <tr>
+                                <th>训练设备</th>
+                                <td>{{ task.device }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 时间信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <th>创建时间</th>
+                                <td>{{ task.created_at|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>开始时间</th>
+                                <td>{{ task.started_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <th>完成时间</th>
+                                <td>{{ task.completed_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    {% if task.status == 'pending' %}
+                    <button onclick="startTraining({{ task.id }})" class="btn btn-success btn-lg">
+                        <i class="bi bi-play-fill"></i> 开始训练
+                    </button>
+                    {% elif task.status == 'running' %}
+                    <button onclick="stopTraining({{ task.id }})" class="btn btn-warning btn-lg">
+                        <i class="bi bi-stop-fill"></i> 停止训练
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let taskId = {{ task.id }};
+let isRunning = {{ task.status == 'running'|yesno:"true,false" }};
+
+function startTraining(id) {
+    fetch(`/ai/training/${id}/start/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.message);
+        location.reload();
+    });
+}
+
+function stopTraining(id) {
+    fetch(`/ai/training/${id}/stop/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.message);
+        location.reload();
+    });
+}
+
+function updateProgress() {
+    if (!isRunning) return;
+    
+    fetch(`/ai/training/${taskId}/progress/`)
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('progress-bar').style.width = data.progress + '%';
+        document.getElementById('progress-text').textContent = data.progress + '%';
+        document.getElementById('current-epoch').textContent = data.current_epoch;
+        document.getElementById('best-map').textContent = data.best_map || '-';
+        
+        if (data.status === 'completed' || data.status === 'failed') {
+            isRunning = false;
+            location.reload();
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+if (isRunning) {
+    setInterval(updateProgress, 5000);
+}
+</script>
+{% endblock %}

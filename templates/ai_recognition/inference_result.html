@@ -1,0 +1,114 @@
+{% extends 'ai_recognition/inference.html' %}
+
+{% block inference_content %}
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-check-circle"></i> 检测结果</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>原始图片</h6>
+                <img src="{{ source_path }}" class="img-fluid rounded" style="max-height: 400px;">
+            </div>
+            <div class="col-md-6">
+                <h6>检测结果</h6>
+                {% if result_path %}
+                <img src="{{ result_path }}" class="img-fluid rounded" style="max-height: 400px;">
+                {% else %}
+                <div class="alert alert-info">检测完成，等待结果图像生成</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <hr>
+        
+        <h5><i class="bi bi-list-check"></i> 检测详情</h5>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ result.total_detections }}</h3>
+                        <p>总检测数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ result.processing_time|floatformat:3 }}s</h3>
+                        <p>处理时间</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ record.confidence_threshold }}</h3>
+                        <p>置信度阈值</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if result.class_counts %}
+        <div class="mt-4">
+            <h6>检测类别统计</h6>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>类别名称</th>
+                        <th>检测数量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for class_name, count in result.class_counts.items %}
+                    <tr>
+                        <td><span class="badge bg-primary">{{ class_name }}</span></td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        
+        <div class="mt-4">
+            <h6>检测详情列表</h6>
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>类别</th>
+                        <th>置信度</th>
+                        <th>边界框</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for det in result.detections %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><span class="badge bg-success">{{ det.class_name }}</span></td>
+                        <td>{{ det.confidence|floatformat:4 }}</td>
+                        <td><small>[{{ det.bbox|join:", " }}]</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">暂无检测结果</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{% url 'ai_recognition:inference_image' %}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> 返回继续检测
+            </a>
+            <a href="{% url 'ai_recognition:inference_history' %}" class="btn btn-secondary">
+                <i class="bi bi-clock-history"></i> 查看历史
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

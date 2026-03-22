@@ -1,0 +1,69 @@
+{% extends 'ai_recognition/inference.html' %}
+
+{% block inference_content %}
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 推理历史记录</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>模式</th>
+                        <th>使用模型</th>
+                        <th>检测数</th>
+                        <th>置信度</th>
+                        <th>处理时间</th>
+                        <th>推理时间</th>
+                        <th>操作者</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in page_obj %}
+                    <tr>
+                        <td>{{ record.id }}</td>
+                        <td>
+                            {% if record.mode == 'image' %}
+                            <span class="badge bg-primary"><i class="bi bi-image"></i> 图片</span>
+                            {% elif record.mode == 'video' %}
+                            <span class="badge bg-success"><i class="bi bi-film"></i> 视频</span>
+                            {% elif record.mode == 'camera' %}
+                            <span class="badge bg-info"><i class="bi bi-webcam"></i> 摄像头</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ record.model.name|default:"默认模型" }}</td>
+                        <td>{{ record.total_detections }}</td>
+                        <td>{{ record.confidence_threshold }}</td>
+                        <td>{{ record.processing_time|floatformat:3 }}s</td>
+                        <td>{{ record.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{{ record.created_by.username }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">暂无推理记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if page_obj.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1">首页</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">末页</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
