@@ -1,51 +1,71 @@
-{% extends 'ai_recognition/inference.html' %}
+{% extends 'base.html' %}
+{% load static %}
 
-{% block inference_content %}
+{% block title %}检测结果{% endblock %}
+
+{% block content %}
 <div class="card">
     <div class="card-header bg-success text-white">
-        <h5 class="mb-0"><i class="bi bi-check-circle"></i> 检测结果</h5>
+        <h5 class="mb-0"><i class="bi bi-check-circle"></i> 图片检测结果</h5>
     </div>
     <div class="card-body">
+        {% if result.detections %}
         <div class="row">
             <div class="col-md-6">
                 <h6>原始图片</h6>
-                <img src="{{ source_path }}" class="img-fluid rounded" style="max-height: 400px;">
+                {% if record.source_file %}
+                <img src="{{ record.source_file.url }}" class="img-fluid rounded border" style="max-height: 500px;">
+                {% else %}
+                <div class="alert alert-warning">原始图片未找到</div>
+                {% endif %}
             </div>
             <div class="col-md-6">
                 <h6>检测结果</h6>
-                {% if result_path %}
-                <img src="{{ result_path }}" class="img-fluid rounded" style="max-height: 400px;">
+                {% if record.result_file %}
+                <img src="{{ record.result_file.url }}" class="img-fluid rounded border" style="max-height: 500px;">
                 {% else %}
-                <div class="alert alert-info">检测完成，等待结果图像生成</div>
+                <div class="alert alert-info">检测结果图片未生成</div>
                 {% endif %}
             </div>
         </div>
+        {% else %}
+        <div class="alert alert-warning text-center">
+            <i class="bi bi-exclamation-triangle"></i> 未检测到任何目标
+        </div>
+        {% endif %}
         
         <hr>
         
-        <h5><i class="bi bi-list-check"></i> 检测详情</h5>
-        <div class="row">
-            <div class="col-md-4">
+        <div class="row mt-3">
+            <div class="col-md-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body text-center">
-                        <h3>{{ result.total_detections }}</h3>
-                        <p>总检测数</p>
+                        <h3>{{ result.total_detections|default:0 }}</h3>
+                        <p class="mb-0">总检测数</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
                         <h3>{{ result.processing_time|floatformat:3 }}s</h3>
-                        <p>处理时间</p>
+                        <p class="mb-0">处理时间</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card bg-info text-white">
                     <div class="card-body text-center">
                         <h3>{{ record.confidence_threshold }}</h3>
-                        <p>置信度阈值</p>
+                        <p class="mb-0">置信度阈值</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <h3>{{ result.detections|length }}</h3>
+                        <p class="mb-0">有效检测</p>
                     </div>
                 </div>
             </div>
@@ -53,60 +73,78 @@
         
         {% if result.class_counts %}
         <div class="mt-4">
-            <h6>检测类别统计</h6>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>类别名称</th>
-                        <th>检测数量</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for class_name, count in result.class_counts.items %}
-                    <tr>
-                        <td><span class="badge bg-primary">{{ class_name }}</span></td>
-                        <td>{{ count }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <h5><i class="bi bi-pie-chart"></i> 检测类别统计</h5>
+            <div class="row">
+                {% for class_name, count in result.class_counts.items %}
+                <div class="col-md-3 mb-2">
+                    <div class="card">
+                        <div class="card-body py-2">
+                            <span class="badge bg-primary fs-6">{{ class_name }}</span>
+                            <span class="h4 mb-0 ms-2">{{ count }}</span>
+                            <small class="text-muted">个</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if result.detections %}
+        <div class="mt-4">
+            <h5><i class="bi bi-list-check"></i> 检测详情列表</h5>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>类别名称</th>
+                            <th>置信度</th>
+                            <th>边界框坐标</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for det in result.detections %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <span class="badge bg-success fs-6">{{ det.class_name }}</span>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px; width: 100px;">
+                                    <div class="progress-bar bg-info" style="width: {% widthratio det.confidence 1 100 %}%">
+                                        {{ det.confidence|floatformat:2 }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td><code>[{{ det.bbox|join:", " }}]</code></td>
+                            <td>
+                                {% if det.confidence >= 0.7 %}
+                                <span class="badge bg-success">高置信度</span>
+                                {% elif det.confidence >= 0.5 %}
+                                <span class="badge bg-warning">中置信度</span>
+                                {% else %}
+                                <span class="badge bg-secondary">低置信度</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
         {% endif %}
         
         <div class="mt-4">
-            <h6>检测详情列表</h6>
-            <table class="table table-sm table-hover">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>类别</th>
-                        <th>置信度</th>
-                        <th>边界框</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for det in result.detections %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td><span class="badge bg-success">{{ det.class_name }}</span></td>
-                        <td>{{ det.confidence|floatformat:4 }}</td>
-                        <td><small>[{{ det.bbox|join:", " }}]</small></td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center text-muted">暂无检测结果</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="mt-4">
             <a href="{% url 'ai_recognition:inference_image' %}" class="btn btn-primary">
-                <i class="bi bi-arrow-left"></i> 返回继续检测
+                <i class="bi bi-arrow-left"></i> 继续检测
             </a>
             <a href="{% url 'ai_recognition:inference_history' %}" class="btn btn-secondary">
                 <i class="bi bi-clock-history"></i> 查看历史
+            </a>
+            <a href="{% url 'ai_recognition:recognition_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-house"></i> 返回AI中心
             </a>
         </div>
     </div>

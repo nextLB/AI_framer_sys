@@ -327,7 +327,10 @@ def inference_image(request):
         
         timestamp = int(time.time() * 1000)
         ext = os.path.splitext(image_file.name)[1]
-        source_path = os.path.join(upload_dir, f'{timestamp}{ext}')
+        source_filename = f'{timestamp}{ext}'
+        result_filename = f'{timestamp}_result.jpg'
+        source_path = os.path.join(upload_dir, source_filename)
+        result_path = os.path.join(result_dir, result_filename)
         
         with open(source_path, 'wb+') as destination:
             for chunk in image_file.chunks():
@@ -340,29 +343,29 @@ def inference_image(request):
         
         result = inference.predict_image(source_path)
         
+        if result.get('result_image') is not None:
+            cv2.imwrite(result_path, result['result_image'])
+        
+        import copy
+        result_for_db = copy.deepcopy(result)
+        if 'result_image' in result_for_db:
+            del result_for_db['result_image']
+        
         record = InferenceRecord.objects.create(
             mode='image',
             model=model,
-            source_file=source_path,
+            source_file=f'inference/source/{source_filename}',
+            result_file=f'inference/result/{result_filename}',
             confidence_threshold=confidence,
             total_detections=result.get('total_detections', 0),
-            detection_details=result,
+            detection_details=result_for_db,
             processing_time=result.get('processing_time', 0),
             created_by=request.user,
         )
         
-        result_image_path = None
-        if result.get('result_image') is not None:
-            result_image_path = os.path.join(result_dir, f'{timestamp}_result.jpg')
-            cv2.imwrite(result_image_path, result['result_image'])
-            record.result_file = result_image_path
-            record.save()
-        
         return render(request, 'ai_recognition/inference_result.html', {
             'result': result,
             'record': record,
-            'source_path': source_path,
-            'result_path': result_image_path,
         })
     
     models = AIModel.objects.all()
@@ -389,8 +392,10 @@ def inference_video(request):
         
         timestamp = int(time.time() * 1000)
         ext = os.path.splitext(video_file.name)[1]
-        source_path = os.path.join(upload_dir, f'{timestamp}{ext}')
-        result_path = os.path.join(result_dir, f'{timestamp}_result.mp4')
+        source_filename = f'{timestamp}{ext}'
+        result_filename = f'{timestamp}_result.mp4'
+        source_path = os.path.join(upload_dir, source_filename)
+        result_path = os.path.join(result_dir, result_filename)
         
         with open(source_path, 'wb+') as destination:
             for chunk in video_file.chunks():
@@ -406,8 +411,8 @@ def inference_video(request):
         record = InferenceRecord.objects.create(
             mode='video',
             model=model,
-            source_file=source_path,
-            result_file=result_path,
+            source_file=f'inference/source/{source_filename}',
+            result_file=f'inference/result/{result_filename}',
             confidence_threshold=confidence,
             total_detections=result.get('total_detections', 0),
             detection_details=result,
@@ -418,8 +423,6 @@ def inference_video(request):
         return render(request, 'ai_recognition/inference_video_result.html', {
             'result': result,
             'record': record,
-            'source_path': source_path,
-            'result_path': result_path,
         })
     
     models = AIModel.objects.all()
