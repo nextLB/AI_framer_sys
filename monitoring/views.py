@@ -83,5 +83,10 @@ def all_devices_status(request):
         'lat': float(d.location_lat) if d.location_lat else None,
         'lng': float(d.location_lng) if d.location_lng else None,
     } for d in devices]
-    
+
     return JsonResponse({'devices': data})
+
+
+@login_required
+def auto_mode_info(request):
+    return render(request, 'monitoring/auto_mode_info.html')

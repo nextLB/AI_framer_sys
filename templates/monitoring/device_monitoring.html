@@ -106,6 +106,59 @@
         background: #f8d7da;
         border-left-color: #dc3545;
     }
+    
+    .mode-switch {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .mode-btn {
+        flex: 1;
+        padding: 10px;
+        text-align: center;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .mode-btn.active {
+        border: 2px solid;
+    }
+    .mode-auto { background: #d4edda; border-color: #28a745; }
+    .mode-manual { background: #cce5ff; border-color: #007bff; }
+    .mode-camera { background: #f8d7da; border-color: #dc3545; }
+    
+    .path-planning {
+        border: 2px dashed #2196F3;
+        border-radius: 8px;
+        padding: 10px;
+        margin: 10px 0;
+    }
+    .detection-box {
+        position: absolute;
+        border: 2px solid;
+        border-radius: 4px;
+        padding: 2px 5px;
+        font-size: 12px;
+        color: white;
+        font-weight: bold;
+    }
+    .detection-crop { border-color: #4CAF50; background: rgba(76, 175, 80, 0.7); }
+    .detection-weed { border-color: #FF9800; background: rgba(255, 152, 0, 0.7); }
+    .detection-pest { border-color: #F44336; background: rgba(244, 67, 54, 0.7); }
+    
+    .ai-result {
+        background: #e8f5e9;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+    .ai-result-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid #c8e6c9;
+    }
+    .ai-result-item:last-child { border-bottom: none; }
 </style>
 {% endblock %}
 
@@ -118,13 +171,50 @@
     </span>
 </h2>
 
+<!-- 运行模式切换 -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> 运行模式切换</h5>
+            </div>
+            <div class="card-body">
+                <div class="mode-switch">
+                    <a href="{% url 'devices:set_mode' device.id 'auto' %}" class="mode-btn mode-auto {% if device.run_mode == 'auto' %}active{% endif %}">
+                        <i class="bi bi-robot"></i><br>自动模式
+                        <small class="d-block">自主巡逻/喷洒</small>
+                    </a>
+                    <a href="{% url 'devices:set_mode' device.id 'manual' %}" class="mode-btn mode-manual {% if device.run_mode == 'manual' %}active{% endif %}">
+                        <i class="bi bi-gamepad"></i><br>手动模式
+                        <small class="d-block">摇杆控制</small>
+                    </a>
+                    <div class="mode-btn mode-camera" id="aiModeBtn" style="cursor:pointer;">
+                        <i class="bi bi-camera-video"></i><br>AI视觉模式
+                        <small class="d-block">实时识别</small>
+                    </div>
+                </div>
+                <p class="text-muted">
+                    <i class="bi bi-info-circle"></i> 当前模式：{{ device.get_run_mode_display }}
+                    {% if device.run_mode == 'auto' %}
+                    - 机器人将按照预设路径自动巡逻，开启摄像头识别作物/杂草，智能喷洒
+                    {% elif device.run_mode == 'manual' %}
+                    - 通过下方控制按钮手动控制机器人移动和喷洒
+                    {% else %}
+                    - 点击AI视觉模式开启摄像头进行实时识别
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <!-- 左侧：视频流 + 控制 -->
     <div class="col-lg-7">
-        <!-- 视频监控 -->
-        <div class="card mb-4">
+        <!-- AI视觉识别 -->
+        <div class="card mb-4" id="aiDetectionCard" style="display:none;">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-webcam"></i> 视频监控</h5>
+                <h5 class="mb-0"><i class="bi bi-eye"></i> AI视觉识别</h5>
                 <div>
                     <button id="startCameraBtn" class="btn btn-success btn-sm" onclick="startCamera()">
                         <i class="bi bi-play-fill"></i> 开启摄像头
@@ -135,10 +225,59 @@
                 </div>
             </div>
             <div class="card-body p-0">
-                <div id="camera-container">
+                <div id="camera-container" style="position:relative;">
                     <video id="camera-video" autoplay playsinline style="display:none;"></video>
                     <canvas id="camera-canvas"></canvas>
                     <div id="camera-placeholder" style="height: 400px; display: flex; align-items: center; justify-content: center; background: #1a1a2e; color: #666;">
+                        <div class="text-center">
+                            <i class="bi bi-camera-video-off" style="font-size: 4rem;"></i>
+                            <p class="mt-2">点击"开启摄像头"开始AI识别</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- AI识别结果 -->
+            <div class="card-body" id="aiResultCard" style="display:none;">
+                <h6><i class="bi bi-info-circle"></i> AI识别结果</h6>
+                <div class="ai-result" id="aiResults">
+                    <div class="ai-result-item">
+                        <span><i class="bi bi-tree"></i> 作物数量</span>
+                        <span id="cropCount">0</span>
+                    </div>
+                    <div class="ai-result-item">
+                        <span><i class="bi bi-yinlane"></i> 杂草数量</span>
+                        <span id="weedCount">0</span>
+                    </div>
+                    <div class="ai-result-item">
+                        <span><i class="bi bi-bug"></i> 病虫害</span>
+                        <span id="pestCount">0</span>
+                    </div>
+                    <div class="ai-result-item">
+                        <span><i class="bi bi-check-circle"></i> 识别置信度</span>
+                        <span id="confidence">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 视频监控 -->
+        <div class="card mb-4" id="videoMonitorCard">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-webcam"></i> 视频监控</h5>
+                <div>
+                    <button id="startCameraBtn2" class="btn btn-success btn-sm" onclick="startCamera2()">
+                        <i class="bi bi-play-fill"></i> 开启摄像头
+                    </button>
+                    <button id="stopCameraBtn2" class="btn btn-danger btn-sm" onclick="stopCamera2()" disabled>
+                        <i class="bi bi-stop-fill"></i> 关闭
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="camera-container2">
+                    <video id="camera-video2" autoplay playsinline style="display:none;"></video>
+                    <canvas id="camera-canvas2"></canvas>
+                    <div id="camera-placeholder2" style="height: 400px; display: flex; align-items: center; justify-content: center; background: #1a1a2e; color: #666;">
                         <div class="text-center">
                             <i class="bi bi-camera-video-off" style="font-size: 4rem;"></i>
                             <p class="mt-2">点击"开启摄像头"开始监控</p>
@@ -178,6 +317,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- 路径规划 (自动模式) -->
+        {% if device.run_mode == 'auto' %}
+        <div class="card mb-4" id="pathPlanningCard">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-signpost-2"></i> 路径规划</h5>
+            </div>
+            <div class="card-body">
+                <div class="path-planning">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-list-ol"></i> 巡逻点</h6>
+                            <ul class="list-unstyled" id="patrolPoints">
+                                <li>起点 → A点 → B点 → C点 → D点 → 起点</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-clock"></i> 巡检进度</h6>
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div class="progress-bar bg-success" id="patrolProgress" style="width: 0%;">0%</div>
+                            </div>
+                            <p class="text-muted" id="currentPoint">当前: 等待开始</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- 预警信息 -->
         <div class="card">
@@ -285,10 +452,12 @@ let trackPoints = [];
 let robotPosition = [{{ device.location_lng|default:"116.397428" }}, {{ device.location_lat|default:"39.90923" }}];
 let sensorChart = null;
 let stream = null;
+let stream2 = null;
 let isCameraRunning = false;
 let simulationInterval = null;
 let runStartTime = null;
 let runTimerInterval = null;
+let patrolInterval = null;
 
 // 初始化地图
 function initMap() {
@@ -548,6 +717,9 @@ async function startCamera() {
         document.getElementById('startCameraBtn').disabled = true;
         document.getElementById('stopCameraBtn').disabled = false;
         
+        // 显示AI结果区域
+        document.getElementById('aiResultCard').style.display = 'block';
+        
         // 开始模拟数据
         startSimulation();
         
@@ -580,10 +752,129 @@ function stopCamera() {
     }
 }
 
+// 第二路摄像头（普通监控）
+async function startCamera2() {
+    try {
+        stream2 = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
+            audio: false
+        });
+        
+        const video = document.getElementById('camera-video2');
+        const canvas = document.getElementById('camera-canvas2');
+        const placeholder = document.getElementById('camera-placeholder2');
+        
+        video.srcObject = stream2;
+        video.style.display = 'block';
+        placeholder.style.display = 'none';
+        
+        const ctx = canvas.getContext('2d');
+        
+        video.onloadedmetadata = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        };
+        
+        document.getElementById('startCameraBtn2').disabled = true;
+        document.getElementById('stopCameraBtn2').disabled = false;
+        
+        startSimulation();
+        
+    } catch (err) {
+        alert('无法访问摄像头: ' + err.message);
+    }
+}
+
+function stopCamera2() {
+    if (stream2) {
+        stream2.getTracks().forEach(track => track.stop());
+        stream2 = null;
+    }
+    
+    document.getElementById('camera-video2').style.display = 'none';
+    document.getElementById('camera-placeholder2').style.display = 'flex';
+    document.getElementById('startCameraBtn2').disabled = false;
+    document.getElementById('stopCameraBtn2').disabled = true;
+}
+
+// AI视觉模式切换
+document.getElementById('aiModeBtn').addEventListener('click', function() {
+    document.getElementById('aiDetectionCard').style.display = 'block';
+    document.getElementById('videoMonitorCard').style.display = 'none';
+    
+    // 隐藏AI检测卡片后自动显示摄像头
+    if (stream) {
+        startCamera();
+    }
+});
+
+// 模拟AI识别（当摄像头开启时模拟检测）
+function simulateAIDetection() {
+    if (!isCameraRunning) return;
+    
+    // 随机生成检测结果
+    const cropCount = Math.floor(Math.random() * 20) + 5;
+    const weedCount = Math.floor(Math.random() * 10);
+    const pestCount = Math.floor(Math.random() * 3);
+    const confidence = (70 + Math.random() * 25).toFixed(1);
+    
+    document.getElementById('cropCount').textContent = cropCount;
+    document.getElementById('weedCount').textContent = weedCount;
+    document.getElementById('pestCount').textContent = pestCount;
+    document.getElementById('confidence').textContent = confidence + '%';
+    
+    // 预警检测
+    if (pestCount > 1) {
+        addAlert('danger', '检测到病虫害！发现 ' + pestCount + ' 处病虫害特征，建议立即喷洒');
+    } else if (weedCount > 5) {
+        addAlert('warning', '发现较多杂草(' + weedCount + '处)，建议除草处理');
+    }
+}
+
+function addAlert(type, msg) {
+    const container = document.getElementById('alertContainer');
+    const alertHtml = `<div class="alert-item ${type}">
+        <i class="bi bi-exclamation-circle"></i> ${msg}
+    </div>`;
+    container.innerHTML = alertHtml + container.innerHTML;
+}
+
+// 自动模式路径规划模拟
+function simulateAutoMode() {
+    const patrolPoints = ['A点(东北)', 'B点(东南)', 'C点(西南)', 'D点(西北)', '起点'];
+    let currentIndex = 0;
+    let progress = 0;
+    
+    const pathInterval = setInterval(() => {
+        if (progress >= 100) {
+            progress = 0;
+            currentIndex = 0;
+        }
+        
+        progress += 5;
+        document.getElementById('patrolProgress').style.width = progress + '%';
+        document.getElementById('patrolProgress').textContent = progress + '%';
+        
+        const pointIndex = Math.floor((progress / 100) * patrolPoints.length);
+        if (pointIndex < patrolPoints.length) {
+            document.getElementById('currentPoint').textContent = '当前: ' + patrolPoints[pointIndex];
+        }
+        
+    }, 1000);
+}
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
     initSensorChart();
+    
+    // 自动模式自动启动路径模拟
+    {% if device.run_mode == 'auto' %}
+    simulateAutoMode();
+    {% endif %}
+    
+    // 如果AI检测卡默认显示，启动模拟识别
+    setInterval(simulateAIDetection, 3000);
 });
 </script>
 

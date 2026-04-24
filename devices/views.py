@@ -107,3 +107,26 @@ def device_status_api(request, device_id):
         'location_lng': str(device.location_lng) if device.location_lng else None,
     }
     return JsonResponse(data)
+
+
+@login_required
+def set_device_mode(request, device_id, mode):
+    device = get_object_or_404(RobotDevice, id=device_id)
+
+    valid_modes = ['auto', 'manual', 'scheduled']
+    if mode not in valid_modes:
+        messages.error(request, '无效的运行模式')
+        return redirect('devices:device_detail', device_id=device.id)
+
+    device.run_mode = mode
+    device.save()
+
+    DeviceOperationLog.objects.create(
+        device=device,
+        operator=request.user,
+        operation_type='config',
+        details=f'切换运行模式为: {device.get_run_mode_display()}'
+    )
+
+    messages.success(request, f'运行模式已切换为: {device.get_run_mode_display()}')
+    return redirect('devices:device_detail', device_id=device.id)

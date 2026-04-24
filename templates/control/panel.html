@@ -2,30 +2,124 @@
 
 {% block title %}设备控制 - {{ device.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .power-btn {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+    }
+    .direction-btn {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        font-size: 1.2rem;
+    }
+    .status-large {
+        font-size: 3rem;
+    }
+    .battery-display {
+        font-size: 2rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2 class="mb-4"><i class="bi bi-controller"></i> 设备控制 - {{ device.name }}</h2>
+<h2 class="mb-4">
+    <i class="bi bi-controller"></i> 设备控制 - {{ device.name }}
+    <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% else %}secondary{% endif %} ms-2">
+        {{ device.get_status_display }}
+    </span>
+</h2>
+
+<!-- 设备启动/停止控制按钮 - 核心控制区域 -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card border-2 {% if device.status == 'offline' or device.status == 'error' %}border-secondary{% elif device.status == 'working' %}border-success{% else %}border-primary{% endif %}">
+            <div class="card-header bg-{% if device.status == 'working' %}success{% elif device.status == 'offline' or device.status == 'error' %}secondary{% else %}primary{% endif %} text-white">
+                <h5 class="mb-0"><i class="bi bi-power"></i> 设备电源控制</h5>
+            </div>
+            <div class="card-body text-center py-4">
+                {% if device.status != 'online' and device.status != 'working' %}
+                    <form method="post" action="{% url 'control:send_command' device.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="start">
+                        <button type="submit" class="btn btn-success power-btn">
+                            <i class="bi bi-power"></i><br>启动设备
+                        </button>
+                    </form>
+                    <p class="mt-3 text-muted">设备离线/故障中，点击启动设备</p>
+                {% else %}
+                    <form method="post" action="{% url 'control:send_command' device.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="stop">
+                        <button type="submit" class="btn btn-danger power-btn">
+                            <i class="bi bi-power"></i><br>停止设备
+                        </button>
+                    </form>
+                    <p class="mt-3 text-muted">设备 {% if device.status == 'working' %}工作中{% else %}在线{% endif %}，点击停止设备</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="row">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">设备状态</div>
-            <div class="card-body">
-                <p><strong>状态：</strong>
-                    <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% else %}secondary{% endif %}">
-                        {{ device.get_status_display }}
-                    </span>
-                </p>
-                <p><strong>电量：</strong> {{ device.battery_level }}%</p>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> 设备状态</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="status-large">
+                            {% if device.status == 'online' %}
+                            <i class="bi bi-wifi text-success"></i>
+                            {% elif device.status == 'working' %}
+                            <i class="bi bi-play-circle text-primary"></i>
+                            {% elif device.status == 'charging' %}
+                            <i class="bi bi-battery-charging text-warning"></i>
+                            {% elif device.status == 'error' %}
+                            <i class="bi bi-exclamation-triangle text-danger"></i>
+                            {% else %}
+                            <i class="bi bi-wifi-off text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <p>{{ device.get_status_display }}</p>
+                    </div>
+                    <div class="col-6">
+                        <div class="battery-display">
+                            {% if device.battery_level > 50 %}
+                            <i class="bi bi-battery-full text-success"></i>
+                            {% elif device.battery_level > 20 %}
+                            <i class="bi bi-battery-half text-warning"></i>
+                            {% else %}
+                            <i class="bi bi-battery-half text-danger"></i>
+                            {% endif %}
+                        </div>
+                        <p>{{ device.battery_level }}%</p>
+                    </div>
+                </div>
+                <hr>
                 <p><strong>运行模式：</strong> {{ device.get_run_mode_display }}</p>
+                <div class="btn-group mt-2">
+                    <a href="{% url 'devices:set_mode' device.id 'auto' %}" class="btn btn-sm btn-outline-{% if device.run_mode == 'auto' %}primary{% else %}secondary{% endif %}">自动</a>
+                    <a href="{% url 'devices:set_mode' device.id 'manual' %}" class="btn btn-sm btn-outline-{% if device.run_mode == 'manual' %}primary{% else %}secondary{% endif %}">手动</a>
+                    <a href="{% url 'devices:set_mode' device.id 'scheduled' %}" class="btn btn-sm btn-outline-{% if device.run_mode == 'scheduled' %}primary{% else %}secondary{% endif %}">定时</a>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">手动控制</div>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gamepad"></i> 手动控制</h5>
+            </div>
             <div class="card-body text-center">
                 {% if manual_control.is_active %}
-                    <p class="text-success">手动控制已激活</p>
+                    <p class="text-success"><i class="bi bi-check-circle"></i> 手动控制已激活</p>
                     <a href="{% url 'control:deactivate_manual_control' device.id %}" class="btn btn-danger">停用手动控制</a>
                 {% else %}
                     <p class="text-muted">手动控制未激活</p>
@@ -36,36 +130,74 @@
     </div>
 </div>
 
+<!-- 运动控制按钮 -->
 <div class="row mt-4">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">快速命令</div>
-            <div class="card-body">
-                <div class="btn-group" role="group">
-                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-arrows"></i> 运动控制</h5>
+            </div>
+            <div class="card-body text-center">
+                <!-- 方向控制布局 -->
+                <div class="d-inline-block mb-3">
+                    <div class="mb-2">
+                        <form method="post" action="{% url 'control:send_command' device.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="command_type" value="forward">
+                            <button type="submit" class="btn btn-primary direction-btn">
+                                <i class="bi bi-arrow-up"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div>
+                        <form method="post" action="{% url 'control:send_command' device.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="command_type" value="left">
+                            <button type="submit" class="btn btn-primary direction-btn">
+                                <i class="bi bi-arrow-left"></i>
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'control:send_command' device.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="command_type" value="stop">
+                            <button type="submit" class="btn btn-danger direction-btn">
+                                <i class="bi bi-stop-fill"></i>
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'control:send_command' device.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="command_type" value="right">
+                            <button type="submit" class="btn btn-primary direction-btn">
+                                <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="mt-2">
+                        <form method="post" action="{% url 'control:send_command' device.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="command_type" value="backward">
+                            <button type="submit" class="btn btn-primary direction-btn">
+                                <i class="bi bi-arrow-down"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- 喷洒控制 -->
+                <div class="mt-4">
+                    <form method="post" action="{% url 'control:send_command' device.id %}" class="d-inline">
                         {% csrf_token %}
-                        <input type="hidden" name="command_type" value="forward">
-                        <button type="submit" class="btn btn-primary">前进</button>
+                        <input type="hidden" name="command_type" value="spray_start">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-droplet-fill"></i> 开始喷洒
+                        </button>
                     </form>
-                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
+                    <form method="post" action="{% url 'control:send_command' device.id %}" class="d-inline">
                         {% csrf_token %}
-                        <input type="hidden" name="command_type" value="backward">
-                        <button type="submit" class="btn btn-primary">后退</button>
-                    </form>
-                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="command_type" value="left">
-                        <button type="submit" class="btn btn-primary">左转</button>
-                    </form>
-                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="command_type" value="right">
-                        <button type="submit" class="btn btn-primary">右转</button>
-                    </form>
-                    <form method="post" action="{% url 'control:send_command' device.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="command_type" value="stop">
-                        <button type="submit" class="btn btn-danger">停止</button>
+                        <input type="hidden" name="command_type" value="spray_stop">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-droplet"></i> 停止喷洒
+                        </button>
                     </form>
                 </div>
             </div>
@@ -76,7 +208,9 @@
 <div class="row mt-4">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">最近命令</div>
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 最近命令</h5>
+            </div>
             <div class="card-body">
                 {% if commands %}
                 <table class="table table-sm">
@@ -105,5 +239,14 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="mt-4 mb-4">
+    <a href="{% url 'devices:device_detail' device.id %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> 返回设备详情
+    </a>
+    <a href="{% url 'monitoring:device_monitoring' device.id %}" class="btn btn-info">
+        <i class="bi bi-display"></i> 实时监控
+    </a>
 </div>
 {% endblock %}

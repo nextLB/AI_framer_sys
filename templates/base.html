@@ -39,8 +39,9 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'ai_recognition:recognition_dashboard' %}"><i class="bi bi-house"></i> AI中心首页</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'ai_recognition:training_list' %}"><i class="bi bi-gear-wide-connected"></i> 模型训练</a></li>
                             <li><a class="dropdown-item" href="{% url 'ai_recognition:model_list' %}"><i class="bi bi-box-seam"></i> 模型管理</a></li>
+                            <li><a class="dropdown-item" href="{% url 'ai_recognition:model_upload' %}"><i class="bi bi-upload"></i> 上传模型</a></li>
+                            <li><a class="dropdown-item" href="{% url 'ai_recognition:training_list' %}"><i class="bi bi-gear-wide-connected"></i> 模型训练</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'ai_recognition:inference_camera' %}"><i class="bi bi-webcam"></i> 实时检测</a></li>
                             <li><a class="dropdown-item" href="{% url 'ai_recognition:inference_image' %}"><i class="bi bi-image"></i> 图片检测</a></li>
@@ -48,6 +49,11 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'ai_recognition:inference_history' %}"><i class="bi bi-clock-history"></i> 推理历史</a></li>
                         </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'monitoring:auto_mode_info' %}">
+                            <i class="bi bi-question-circle"></i> 自动模式说明
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'data_analysis:data_dashboard' %}">

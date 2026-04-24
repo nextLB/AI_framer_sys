@@ -2,48 +2,156 @@
 
 {% block title %}设备详情 - {{ device.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .control-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .status-card {
+        border-left: 4px solid;
+    }
+    {% if device.status == 'online' or device.status == 'working' %}
+    .status-card.online { border-left-color: #28a745; }
+    {% else %}
+    .status-card.offline { border-left-color: #6c757d; }
+    {% endif %}
+    .battery-indicator {
+        font-size: 1.2rem;
+    }
+    .mode-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+    .mode-auto { background: #d4edda; color: #155724; }
+    .mode-manual { background: #cce5ff; color: #004085; }
+    .mode-scheduled { background: #fff3cd; color: #856404; }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2 class="mb-4"><i class="bi bi-hdd-stack"></i> 设备详情 - {{ device.name }}</h2>
+<h2 class="mb-4">
+    <i class="bi bi-hdd-stack"></i> 设备详情 - {{ device.name }}
+    <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% else %}secondary{% endif %} ms-2">
+        {{ device.get_status_display }}
+    </span>
+</h2>
 
-<div class="card">
-    <div class="card-header">基本信息</div>
-    <div class="card-body">
-        <p><strong>设备ID：</strong> {{ device.device_id }}</p>
-        <p><strong>设备名称：</strong> {{ device.name }}</p>
-        <p><strong>型号：</strong> {{ device.model|default:"-" }}</p>
-        <p><strong>制造商：</strong> {{ device.manufacturer|default:"-" }}</p>
-        <p><strong>序列号：</strong> {{ device.serial_number|default:"-" }}</p>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4 status-card {% if device.status == 'online' or device.status == 'working' %}online{% else %}offline{% endif %}">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>设备ID：</strong> {{ device.device_id }}</p>
+                <p><strong>设备名称：</strong> {{ device.name }}</p>
+                <p><strong>型号：</strong> {{ device.model|default:"-" }}</p>
+                <p><strong>制造商：</strong> {{ device.manufacturer|default:"-" }}</p>
+                <p><strong>序列号：</strong> {{ device.serial_number|default:"-" }}</p>
+                <p><strong>注册时间：</strong> {{ device.registered_at|date:"Y-m-d H:i" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-speedometer2"></i> 状态信息</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>运行模式：</strong>
+                    <span class="badge mode-badge mode-{{ device.run_mode }}">{{ device.get_run_mode_display }}</span>
+                </p>
+                <p><strong>电量：</strong>
+                    <span class="battery-indicator">
+                        {% if device.battery_level > 50 %}
+                        <i class="bi bi-battery-full text-success"></i>
+                        {% elif device.battery_level > 20 %}
+                        <i class="bi bi-battery-half text-warning"></i>
+                        {% else %}
+                        <i class="bi bi-battery-half text-danger"></i>
+                        {% endif %}
+                        <span class="ms-1">{{ device.battery_level }}%</span>
+                    </span>
+                </p>
+                <p><strong>喷洒速率：</strong> {{ device.spray_rate }} L/min</p>
+                <p><strong>巡检间隔：</strong> {{ device.patrol_interval }} 分钟</p>
+                <p><strong>避障灵敏度：</strong> {{ device.obstacle_avoidance_sensitivity }}</p>
+                <p><strong>最后心跳：</strong> {{ device.last_heartbeat|date:"Y-m-d H:i:s"|default:"-" }}</p>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card mt-4">
-    <div class="card-header">状态信息</div>
-    <div class="card-body">
-        <p><strong>状态：</strong>
-            <span class="badge bg-{% if device.status == 'online' %}success{% elif device.status == 'working' %}primary{% else %}secondary{% endif %}">
-                {{ device.get_status_display }}
-            </span>
-        </p>
-        <p><strong>运行模式：</strong> {{ device.get_run_mode_display }}</p>
-        <p><strong>电量：</strong> {{ device.battery_level }}%</p>
-        <p><strong>喷洒速率：</strong> {{ device.spray_rate }} L/min</p>
-        <p><strong>巡检间隔：</strong> {{ device.patrol_interval }} 分钟</p>
-        <p><strong>避障灵敏度：</strong> {{ device.obstacle_avoidance_sensitivity }}</p>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-geo-alt"></i> 位置信息</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>纬度：</strong> {{ device.location_lat|default:"-" }}</p>
+                <p><strong>经度：</strong> {{ device.location_lng|default:"-" }}</p>
+            </div>
+        </div>
     </div>
-</div>
 
-<div class="card mt-4">
-    <div class="card-header">位置信息</div>
-    <div class="card-body">
-        <p><strong>纬度：</strong> {{ device.location_lat|default:"-" }}</p>
-        <p><strong>经度：</strong> {{ device.location_lng|default:"-" }}</p>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-play-btn"></i> 控制操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="control-actions">
+                    {% if device.status == 'offline' or device.status == 'error' %}
+                    <form method="post" action="{% url 'control:send_command' device.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="start">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-play-fill"></i> 启动设备
+                        </button>
+                    </form>
+                    {% elif device.status == 'online' or device.status == 'working' %}
+                    <form method="post" action="{% url 'control:send_command' device.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="command_type" value="stop">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-stop-fill"></i> 停止设备
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-gear"></i> 切换模式
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'devices:set_mode' device.id 'auto' %}">自动模式</a></li>
+                            <li><a class="dropdown-item" href="{% url 'devices:set_mode' device.id 'manual' %}">手动模式</a></li>
+                            <li><a class="dropdown-item" href="{% url 'devices:set_mode' device.id 'scheduled' %}">定时任务</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="mt-4">
-    <a href="{% url 'devices:device_list' %}" class="btn btn-secondary">返回列表</a>
-    <a href="{% url 'devices:device_edit' device.id %}" class="btn btn-warning">编辑</a>
-    <a href="{% url 'control:control_panel' device.id %}" class="btn btn-primary">控制</a>
-    <a href="{% url 'monitoring:device_monitoring' device.id %}" class="btn btn-info">监控</a>
+    <a href="{% url 'devices:device_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> 返回列表
+    </a>
+    <a href="{% url 'devices:device_edit' device.id %}" class="btn btn-warning">
+        <i class="bi bi-pencil"></i> 编辑
+    </a>
+    <a href="{% url 'control:control_panel' device.id %}" class="btn btn-primary">
+        <i class="bi bi-controller"></i> 控制面板
+    </a>
+    <a href="{% url 'monitoring:device_monitoring' device.id %}" class="btn btn-info">
+        <i class="bi bi-display"></i> 实时监控
+    </a>
 </div>
 {% endblock %}

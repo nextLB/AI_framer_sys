@@ -27,17 +27,17 @@ def control_panel(request, device_id):
 @login_required
 def send_command(request, device_id):
     device = get_object_or_404(RobotDevice, id=device_id)
-    
+
     if request.method == 'POST':
         command_type = request.POST.get('command_type')
         parameters = request.POST.get('parameters', '{}')
-        
+
         import json
         try:
             params = json.loads(parameters)
         except:
             params = {}
-        
+
         command = ControlCommand.objects.create(
             device=device,
             command_type=command_type,
@@ -45,17 +45,28 @@ def send_command(request, device_id):
             sender=request.user,
             status='pending'
         )
-        
+
+        if command_type == 'start':
+            device.status = 'working'
+            device.save()
+            details = '启动设备'
+        elif command_type == 'stop':
+            device.status = 'online'
+            device.save()
+            details = '停止设备'
+        else:
+            details = f'发送命令: {command.get_command_type_display()}'
+
         DeviceOperationLog.objects.create(
             device=device,
             operator=request.user,
             operation_type='control',
-            details=f'发送命令: {command.get_command_type_display()}'
+            details=details
         )
-        
+
         messages.success(request, f'命令已发送: {command.get_command_type_display()}')
         return redirect('control:control_panel', device_id=device.id)
-    
+
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 

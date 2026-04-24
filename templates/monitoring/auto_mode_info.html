@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}自动模式说明{% endblock %}
+
+{% block extra_css %}
+<style>
+    .diagram-container {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 30px;
+        margin: 20px 0;
+    }
+    .step-card {
+        background: white;
+        border-left: 4px solid #2196F3;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: #2196F3;
+        color: white;
+        border-radius: 50%;
+        font-weight: bold;
+        margin-right: 12px;
+    }
+    .arrow-down {
+        text-align: center;
+        font-size: 24px;
+        color: #2196F3;
+        margin: 10px 0;
+    }
+    .feature-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background: #e3f2fd;
+        border-radius: 8px;
+        margin: 8px 0;
+    }
+    .feature-icon {
+        font-size: 24px;
+        margin-right: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">
+    <i class="bi bi-robot"></i> 自动模式运行说明
+</h2>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> 什么是自动模式？</h5>
+    </div>
+    <div class="card-body">
+        <p class="lead">自动模式是植保机器人的智能作业模式，机器人可以按照预设的路线和参数自主完成喷洒、巡检等任务，无需人工持续操作。</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-ol"></i> 自动模式工作流程</h5>
+            </div>
+            <div class="card-body">
+                <div class="step-card">
+                    <div class="d-flex align-items-center">
+                        <span class="step-number">1</span>
+                        <strong>路线规划</strong>
+                    </div>
+                    <p class="mt-2 mb-0">根据田块边界和障碍物位置，生成最优作业路径。</p>
+                </div>
+
+                <div class="arrow-down">↓</div>
+
+                <div class="step-card">
+                    <div class="d-flex align-items-center">
+                        <span class="step-number">2</span>
+                        <strong>GPS定位</strong>
+                    </div>
+                    <p class="mt-2 mb-0">通过GPS/北斗定位，实时确定机器人位置和航向。</p>
+                </div>
+
+                <div class="arrow-down">↓</div>
+
+                <div class="step-card">
+                    <div class="d-flex align-items-center">
+                        <span class="step-number">3</span>
+                        <strong>环境感知</strong>
+                    </div>
+                    <p class="mt-2 mb-0">采集温度、湿度、土壤墒情等传感器数据。</p>
+                </div>
+
+                <div class="arrow-down">↓</div>
+
+                <div class="step-card">
+                    <div class="d-flex align-items-center">
+                        <span class="step-number">4</span>
+                        <strong>AI视觉识别</strong>
+                    </div>
+                    <p class="mt-2 mb-0">实时识别作物、杂草、病虫害情况。</p>
+                </div>
+
+                <div class="arrow-down">↓</div>
+
+                <div class="step-card">
+                    <div class="d-flex align-items-center">
+                        <span class="step-number">5</span>
+                        <strong>智能喷洒</strong>
+                    </div>
+                    <p class="mt-2 mb-0">根据识别结果，自动调整喷洒量和位置。</p>
+                </div>
+
+                <div class="arrow-down">↓</div>
+
+                <div class="step-card">
+                    <div class="d-flex align-items-center">
+                        <span class="step-number">6</span>
+                        <strong>自主避障</strong>
+                    </div>
+                    <p class="mt-2 mb-0">检测障碍物，自动绕行或停止。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> 核心功能</h5>
+            </div>
+            <div class="card-body">
+                <div class="feature-item">
+                    <span class="feature-icon">🗺️</span>
+                    <div>
+                        <strong>路径规划</strong>
+                        <p class="mb-0 text-muted">基于田块边界和作业需求生成最优路线</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <span class="feature-icon">📍</span>
+                    <div>
+                        <strong>RTK精准定位</strong>
+                        <p class="mb-0 text-muted">厘米级定位精度，确保作业准确性</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <span class="feature-icon">👁️</span>
+                    <div>
+                        <strong>AI视觉感知</strong>
+                        <p class="mb-0 text-muted">实时识别作物生长状态和病虫害</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <span class="feature-icon">🚧</span>
+                    <div>
+                        <strong>智能避障</strong>
+                        <p class="mb-0 text-muted">超声波+视觉融合的障碍物检测</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <span class="feature-icon">💧</span>
+                    <div>
+                        <strong>变量喷洒</strong>
+                        <p class="mb-0 text-muted">根据处方图按需精准喷洒</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <span class="feature-icon">🔄</span>
+                    <div>
+                        <strong>自主回充</strong>
+                        <p class="mb-0 text-muted">低电量自动返回充电桩</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-sliders"></i> 参数配置</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>喷洒速率</strong></td>
+                        <td>可调节（0.5-3.0 L/min）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>巡检间隔</strong></td>
+                        <td>可调节（30-120分钟）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>避障灵敏度</strong></td>
+                        <td>可调节（0-100%）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>作业速度</strong></td>
+                        <td>推荐 0.5-1.5 m/s</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-diagram-3"></i> 系统架构图</h5>
+    </div>
+    <div class="card-body">
+        <div class="diagram-container text-center">
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <pre style="text-align: left; background: white; padding: 20px; border-radius: 8px;">
+┌─────────────────────────────────────────────────────────────────────┐
+│                    机器人控制系统                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌─────────┐    ┌─────────────┐    ┌─────────────┐        │
+│   │ 感知层  │───▶│ 决策层     │───▶│ 执行层     │        │
+│   │         │    │             │    │             │        │
+│   │ GPS定位 │    │ 路径规划   │    │ 电机控制   │        │
+│   │ 摄像头 │    │ 障碍检测   │    │ 喷洒控制   │        │
+│   │ 传感器 │    │ AI识别     │    │ 刹车控制   │        │
+│   └─────────┘    └─────────────┘    └─────────────┘        │
+│        ▲              │                    │                │
+│        │              ▼                    ▼                │
+│   ┌──────────────────────────────────────────────┐        │
+│   │              实时数据融合                    │        │
+│   └──────────────────────────────────────────────┘        │
+└─────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-question-circle"></i> 常见问题</h5>
+    </div>
+    <div class="card-body">
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        Q: 自动模式下如何保证作业安全？
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        A: 系统采用多传感器融合的避障方案，结合超声波传感器和视觉识别双重检测。当检测到障碍物时，机器人会自动减速或停止，确保作业安全。
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        Q: 如何确定设备的作业范围？
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        A: 在首次作业前，需要通过App或网页端绘制作业区域边界（围栏），系统会自动生成作业路径。也可以导入现有的地块数据。
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        Q: 电量低时怎么办？
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        A: 系统会实时监测电量，当电量低于20%时会发出预警，低于10%时自动暂停作业并返回充电桩充电。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{% url 'monitoring:monitoring_dashboard' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> 返回监控列表
+    </a>
+</div>
+{% endblock %}
